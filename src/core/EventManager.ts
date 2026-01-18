@@ -1,21 +1,62 @@
-interface EventMap {
-  [key: string]: any;
-}
+export default class EventManager<E extends Record<string, any> = {}> {
+  private _listeners: Map<keyof E, Set<(e?: E[keyof E]) => void>> = new Map();
 
-type EventCallback<E extends EventMap = {}> = (event: E[string]) => void;
-
-export default class EventManager {
-  private _listeners: Map<string, Set<EventCallback>> = new Map();
-
-  on(type: string, callback: EventCallback): void {
+  on(type: keyof E, callback: (e?: E[keyof E]) => void): void {
     if (this.contains(type, callback)) {
-      console.warn("");
+      return;
+    }
+    const listeners = this._listeners.get(type);
+    if (!listeners) {
+      this._listeners.set(type, new Set([callback]));
+    } else {
+      listeners.add(callback);
     }
   }
 
-  off(type: string, callback: EventCallback): void {}
+  off(type: keyof E, callback: (e?: E[keyof E]) => void): void {
+    if (!this.contains(type, callback)) {
+      return;
+    }
 
-  contains(type: string, callback: EventCallback): boolean {
+    const listeners = this._listeners.get(type);
+    if (listeners) {
+      listeners.delete(callback);
+    }
+  }
+
+  once(type: keyof E, callback: (e?: E[keyof E]) => void): void {
+    const onceCb: (e?: E[keyof E]) => void = ((event?: E[keyof E]) => {
+      callback(event);
+      this.off(type, onceCb);
+    }) as (e?: E[keyof E]) => void;
+
+    this.on(type, onceCb);
+  }
+
+  clearType(type: keyof E) {
+    if (!this._listeners.get(type)) return;
+    this._listeners.get(type)?.clear();
+  }
+
+  clearAll() {
+    this._listeners.forEach((set: Set<(e?: E[keyof E]) => void>) => set.clear());
+    this._listeners.clear();
+  }
+
+  contains(type: keyof E, callback: (e?: E[keyof E]) => void): boolean {
+    if (!this._listeners.get(type)) return false;
     return this._listeners.get(type)!.has(callback);
+  }
+
+  emit(type: keyof E, data?: E[keyof E]): void {
+    if (!this._listeners.get(type)) {
+      // Does not exist any subscribers :(
+      return;
+    }
+
+    this._listeners.get(type)?.forEach((callback: (e?: E[keyof E]) => void) => {
+      if (data) callback(data);
+      else callback();
+    });
   }
 }
