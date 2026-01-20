@@ -1,34 +1,57 @@
-export class Entity {
-  id: number;
-  name: string;
+import { SparseSet } from "./SparseSet";
+import type World from "./World";
 
-  constructor(id: number, name: string) {
+class Entity {
+  readonly id: number;
+  private world: World;
+
+  constructor(world: World, id: number) {
     this.id = id;
-    this.name = name;
+    this.world = world;
   }
 
-  add() {
-    // add Component via World
+  add(compType: string | Record<string, any>, compValue: any) {
+    if (typeof compType !== "string") {
+      Object.keys(compType).forEach((key: string) => {
+        const value: any = compType[key];
+        this.world.addComponent(this, key, value);
+      });
+    } else {
+      this.world.addComponent(this, compType, compValue);
+    }
   }
 
-  remove() {}
-  get() {}
+  remove(compType: string) {
+    this.world.removeComponent(this, compType);
+  }
+
+  get(compType: string) {}
 }
 
-export class EntityManager {
-  entities: Map<number, Entity>;
-  entityIdCounter: number = 0;
+export { type Entity };
 
-  constructor() {
-    this.entities = new Map();
+export class EntityManager {
+  world: World;
+  entityLocations: SparseSet<Entity> = new SparseSet();
+  nextId: number = 0;
+
+  constructor(world: World) {
+    this.world = world;
   }
 
-  create(name: string): Entity {
-    this.entityIdCounter++;
-    const entity = new Entity(this.entityIdCounter, name);
-    this.entities.set(this.entityIdCounter, entity);
+  create(): Entity {
+    const id = this.nextId++;
+    const entity = new Entity(this.world, id);
+    this.entityLocations.add(entity);
+
     return entity;
   }
 
-  destroy(entity: Entity) {}
+  destroy(entity: Entity) {
+    if (typeof entity === "number") {
+      this.entityLocations.remove(entity);
+
+      // Remove entity from all queries.
+    }
+  }
 }

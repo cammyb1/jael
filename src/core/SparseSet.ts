@@ -1,54 +1,49 @@
-// Simple and basic SparseSet implementation;
+// Basic sparse Set implementation
+export class SparseSet<V> {
+  denseValues: V[] = [];
+  sparse: Map<V, number> = new Map();
 
-export default class SparseSet<T> {
-  dense: T[] = [];
-  sparse: Map<T, number> = new Map();
-
-  [Symbol.iterator]() {
-    let index = this.dense.length;
-
-    const result = {
-      value: undefined as T,
-      done: false,
-    };
-
-    return {
-      next: () => {
-        result.value = this.dense[--index];
-        result.done = index < 0;
-        return result;
-      },
-    };
+  *[Symbol.iterator](): Generator<V> {
+    for (let i = this.denseValues.length; i > 0; --i) {
+      yield this.denseValues[i];
+    }
   }
 
-  add(item: T) {
+  add(item: V) {
     if (this.has(item)) return;
-    this.dense.push(item);
-    this.sparse.set(item, this.dense.length - 1);
+    this.denseValues.push(item);
+    this.sparse.set(item, this.denseValues.length - 1);
   }
 
-  indexOf(item: T): number {
-    if (!this.has(item)) return -1;
+  indexOf(item: V): number {
+    if (!this.sparse.get(item)) return -1;
     return this.sparse.get(item)!;
   }
 
-  remove(item: T) {
+  remove(item: V) {
     if (!this.has(item)) return;
     const index = this.sparse.get(item)!;
 
     this.sparse.delete(item);
 
-    const last = this.dense[this.dense.length - 1];
+    const lastV = this.denseValues[this.denseValues.length - 1];
 
-    if (last !== item) {
-      this.dense[index] = last;
-      this.sparse.set(last, index);
+    if (lastV !== item) {
+      this.denseValues[index] = lastV;
+      this.sparse.set(lastV, index);
     }
-    this.dense.pop();
+
+    this.denseValues.pop();
+  }
+
+  forEach(predicate: (item: V) => void) {
+    for (let item of this) {
+      predicate(item);
+    }
   }
 
   size() {
-    return this.dense.length;
+    return this.denseValues.length;
   }
 
   clear() {
@@ -57,7 +52,7 @@ export default class SparseSet<T> {
     }
   }
 
-  has(item: T) {
+  has(item: V) {
     return this.sparse.has(item);
   }
 }
