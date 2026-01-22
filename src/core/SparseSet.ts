@@ -3,14 +3,29 @@ export class SparseSet<V> {
   denseValues: V[] = [];
   sparse: Map<V, number> = new Map();
 
-  *[Symbol.iterator](): Generator<V> {
-    for (let i = this.denseValues.length; i >= 0; --i) {
-      yield this.denseValues[i];
-    }
+  [Symbol.iterator]() {
+    let index = this.values.length;
+
+    const result = {
+      value: undefined as V,
+      done: false,
+    };
+
+    return {
+      next: () => {
+        result.value = this.values[--index];
+        result.done = index < 0;
+        return result;
+      },
+    };
   }
 
   get values(): V[] {
     return this.denseValues;
+  }
+
+  first(): V {
+    return this.denseValues[0];
   }
 
   add(item: V) {

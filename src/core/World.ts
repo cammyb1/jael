@@ -2,6 +2,7 @@ import { ComponentManager, type ComponentSchema } from "./ComponentManager";
 import { EntityManager, type Entity } from "./EntityManager";
 import EventRegistry from "./EventRegistry";
 import { Query, type QueryConfig } from "./Query";
+import { SparseSet } from "./SparseSet";
 import { SystemManager, type System } from "./SystemManager";
 
 export interface WorldEvents {
@@ -22,7 +23,7 @@ export default class World extends EventRegistry<WorldEvents> {
     super();
 
     this.entityManager = new EntityManager(this);
-    this.componentManager = new ComponentManager();
+    this.componentManager = new ComponentManager(this);
     this.systemManager = new SystemManager();
 
     this.entityManager.on("create", (entity: Entity | undefined) => {
@@ -33,7 +34,7 @@ export default class World extends EventRegistry<WorldEvents> {
     });
     this.entityManager.on("destroy", (entity: Entity | undefined) => {
       if (entity) {
-        this.emit("entityCreated", { entity });
+        this.emit("entityDestroyed", { entity });
       }
       this._updateQueries();
     });
@@ -61,7 +62,7 @@ export default class World extends EventRegistry<WorldEvents> {
     this.queries = new Map();
   }
 
-  get entities(): Entity[] {
+  get entities(): SparseSet<Entity> {
     return this.entityManager.entities;
   }
 

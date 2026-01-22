@@ -1,15 +1,32 @@
 import type { Entity } from "./EntityManager";
 import EventRegistry from "./EventRegistry";
+import type World from "./World";
 
 export type ComponentSchema = Record<string, any>;
 
 export interface ComponentManagerEvents {
-  add: { entity: Entity, component: keyof ComponentSchema };
-  remove: { entity: Entity, component: keyof ComponentSchema };
+  add: { entity: Entity; component: keyof ComponentSchema };
+  remove: { entity: Entity; component: keyof ComponentSchema };
 }
 
 export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   componentSet: Map<number, ComponentSchema> = new Map();
+  world: World;
+
+  constructor(world: World) {
+    super();
+    this.world = world;
+
+    this.world.on("entityDestroyed", (payload) => {
+      if (
+        payload &&
+        payload.entity &&
+        this.componentSet.get(payload.entity.id)
+      ) {
+        this.componentSet.delete(payload.entity.id);
+      }
+    });
+  }
 
   addComponent<K extends keyof ComponentSchema>(
     entity: Entity,
@@ -53,6 +70,10 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     const schema = this.componentSet.get(entity.id);
     if (schema && schema[key] !== undefined) {
       delete schema[key];
+
+      if (Object.keys(schema).length === 0) {
+        this.componentSet.delete(entity.id);
+      }
 
       this.emit("remove", { entity, component: key });
     }

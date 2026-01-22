@@ -45,8 +45,8 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     this._world = world;
   }
 
-  get entities(): Entity[] {
-    return this.entityMap.values;
+  get entities(): SparseSet<Entity> {
+    return this.entityMap;
   }
 
   create(): Entity {

@@ -25,8 +25,8 @@ export class Query {
     );
   }
 
-  get entities(): Entity[] {
-    return this.entityMap.values;
+  get entities(): SparseSet<Entity> {
+    return this.entityMap;
   }
 
   include(...comps: string[]): Query {
@@ -37,6 +37,14 @@ export class Query {
     return this.world.exclude(...comps);
   }
 
+  private _checkExistingEntities() {
+    for (let entity of this.entities) {
+      if (!this.world.exist(entity)) {
+        this.entityMap.remove(entity);
+      }
+    }
+  }
+
   checkEntities() {
     for (let entity of this.world.entities) {
       if (entity && this.hasComponents(entity)) {
@@ -44,11 +52,7 @@ export class Query {
       }
     }
     // check if current entities exist in world
-    for (let entity of this.entityMap) {
-      if (!this.world.exist(entity)) {
-        this.entityMap.remove(entity);
-      }
-    }
+    this._checkExistingEntities();
   }
 
   static getHash(config: QueryConfig): number {
