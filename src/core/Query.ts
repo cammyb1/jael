@@ -43,6 +43,12 @@ export class Query {
         this.entityMap.add(entity);
       }
     }
+    // check if current entities exist in world
+    for (let entity of this.entityMap) {
+      if (!this.world.exist(entity)) {
+        this.entityMap.remove(entity);
+      }
+    }
   }
 
   static getHash(config: QueryConfig): number {

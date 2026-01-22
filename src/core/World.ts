@@ -1,18 +1,62 @@
-import { ComponentManager } from "./ComponentManager";
+import { ComponentManager, type ComponentSchema } from "./ComponentManager";
 import { EntityManager, type Entity } from "./EntityManager";
+import EventRegistry from "./EventRegistry";
 import { Query, type QueryConfig } from "./Query";
 import { SystemManager, type System } from "./SystemManager";
 
-export default class World {
+export interface WorldEvents {
+  entityCreated: { entity: Entity };
+  entityDestroyed: { entity: Entity };
+  componentAdded: { entity: Entity; component: keyof ComponentSchema };
+  componentRemoved: { entity: Entity; component: keyof ComponentSchema };
+  updated: void;
+}
+
+export default class World extends EventRegistry<WorldEvents> {
   entityManager: EntityManager;
   componentManager: ComponentManager;
   systemManager: SystemManager;
   queries: Map<number, Query>;
 
   constructor() {
+    super();
+
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager();
     this.systemManager = new SystemManager();
+
+    this.entityManager.on("create", (entity: Entity | undefined) => {
+      if (entity) {
+        this.emit("entityCreated", { entity });
+      }
+      this._updateQueries();
+    });
+    this.entityManager.on("destroy", (entity: Entity | undefined) => {
+      if (entity) {
+        this.emit("entityCreated", { entity });
+      }
+      this._updateQueries();
+    });
+    this.componentManager.on(
+      "add",
+      (payload: { entity: Entity; component: keyof ComponentSchema }) => {
+        this.emit("componentAdded", {
+          entity: payload.entity,
+          component: payload.component,
+        });
+        this._updateQueries();
+      },
+    );
+    this.componentManager.on(
+      "remove",
+      (payload: { entity: Entity; component: keyof ComponentSchema }) => {
+        this.emit("componentRemoved", {
+          entity: payload.entity,
+          component: payload.component,
+        });
+        this._updateQueries();
+      },
+    );
 
     this.queries = new Map();
   }
@@ -28,13 +72,17 @@ export default class World {
     if (!query) {
       query = new Query(config, this);
       this.queries.set(hash, query);
+      this._updateQueries();
     }
-    this.updateQueries();
     return query;
   }
 
-  updateQueries() {
+  private _updateQueries() {
     this.queries.forEach((query: Query) => query.checkEntities());
+  }
+
+  exist(entity: Entity): boolean {
+    return this.entityManager.exist(entity);
   }
 
   include(...comps: string[]): Query {
@@ -46,14 +94,11 @@ export default class World {
   }
 
   create(): Entity {
-    const entity = this.entityManager.create();
-    this.updateQueries();
-    return entity;
+    return this.entityManager.create();
   }
 
   destroy(entity: Entity) {
-    this.entityManager.remove(entity);
-    this.updateQueries();
+    this.entityManager.destroy(entity);
   }
 
   addSystem(sys: System) {
@@ -65,16 +110,18 @@ export default class World {
   }
 
   addComponent(entity: Entity, compKey: string, compValue: any) {
-    this.componentManager.addComponent(entity.id, compKey, compValue);
+    this.componentManager.addComponent(entity, compKey, compValue);
   }
 
   removeComponent(entity: Entity, compKey: string) {
-    this.componentManager.removeComponent(entity.id, compKey);
+    this.componentManager.removeComponent(entity, compKey);
   }
 
   update() {
     this.systemManager.systemList.forEach((system: System) => {
       system.update();
     });
+
+    this.emit("updated");
   }
 }

@@ -1,55 +1,3 @@
-/*
--- Simple Api Example
-
--- Singleton Time class for managing requestAnimationFrame.
-
-const world = new World();
-
-const player: Entity = world.create();
-const enemy: Entity = world.create();
-
-player.add('position', {x: 1, y: 1, z: 1}); -- case sensitive
-enemy.add({ isEnemy: true, name: 'skeleton', position: {x:1, y: 2, z: 1}, health: 100 }) -- multiple comp
-world.addComponent(player, 'rotation', {x: 1, y: 1, z: 1})
-
-player.remove('rotation')
-
-const pos = player.get('position')
-
-const query = world.query.in(['position']).out('name')
-
-console.log(query.entities) -- Player & Enemy
-
-function moveSystem() : System {
-  const {entities} = query;
-
-  return {
-    enter(){
-      console.log('System entered.')
-      const player2 = world.create();
-      player2.add('position', {x: 1, y: 1})
-
-      console.log(entities) -- Player & Player2 & Enemy
-    }
-    update(){
-      const delta= Time.delta;
-
-    }    
-    exit(){
-      console.log('System exited.')
-    }
-  }
-}
-
-world.addSystem(moveSystem)
-
-world.destroy(enemy);
-
-
--- Make full performance test with multiple entities and watch how it perform.
-
-*/
-
 import type { System } from "./core/SystemManager";
 import { Time } from "./core/Time";
 import World from "./core/World";
@@ -62,13 +10,13 @@ const enemy2 = world.create();
 
 player.add("name", "player");
 player.add("position", { x: 1, y: 0 });
-player.add("health", 100);
+player.add("health", { value: 100 });
 
 enemy.add("name", "enemy");
-enemy.add("health", 200);
+enemy.add("health", { value: 200 });
 enemy.add("position", { x: 1, y: 0 });
 enemy.add("name", "enemy2");
-enemy2.add("health", 200);
+enemy2.add("health", { value: 200 });
 
 const posEntities = world.include("position", "name");
 const healthEntities = world.include("health");
@@ -85,7 +33,7 @@ function logSystem(): System {
           const health = entity.get("health");
 
           console.log(
-            `name: ${name}, pos: [${pos.x}, ${pos.y}], health: ${health || 0}`,
+            `name: ${name}, pos: [${pos.x}, ${pos.y}], health: ${health.value || 0}`,
           );
         }
       }, 100);
@@ -113,7 +61,11 @@ function poisonSystem(): System {
     update() {
       for (let entity of healthEntities.entities) {
         const health = entity.get("health");
-        health -= poisonDmg;
+        health.value -= poisonDmg;
+        if (health.value <= 0) {
+          health.value = 0;
+          world.destroy(entity);
+        }
       }
     },
   };
@@ -121,6 +73,7 @@ function poisonSystem(): System {
 
 world.addSystem(moveSystem());
 world.addSystem(logSystem());
+world.addSystem(poisonSystem());
 
 Time.start();
 Time.on("update", () => {

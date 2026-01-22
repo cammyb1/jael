@@ -1,7 +1,9 @@
-export default class EventRegistry<E extends Record<string, any> = {}> {
-  private _listeners: Map<keyof E, Set<(e?: E[keyof E]) => void>> = new Map();
+export type Event<E> = (e: E[keyof E]) => void;
 
-  on(type: keyof E, callback: (e?: E[keyof E]) => void): void {
+export default class EventRegistry<E extends Record<string, any> = {}> {
+  private _listeners: Map<keyof E, Set<Event<E>>> = new Map();
+
+  on(type: keyof E, callback: Event<E>): void {
     if (this.contains(type, callback)) {
       return;
     }
@@ -13,7 +15,7 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
     }
   }
 
-  off(type: keyof E, callback: (e?: E[keyof E]) => void): void {
+  off(type: keyof E, callback: Event<E>): void {
     if (!this.contains(type, callback)) {
       return;
     }
@@ -24,8 +26,8 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
     }
   }
 
-  once(type: keyof E, callback: (e?: E[keyof E]) => void): void {
-    const onceCb: (e?: E[keyof E]) => void = ((event?: E[keyof E]) => {
+  once(type: keyof E, callback: Event<E>): void {
+    const onceCb: (e?: E[keyof E]) => void = ((event: E[keyof E]) => {
       callback(event);
       this.off(type, onceCb);
     }) as (e?: E[keyof E]) => void;
@@ -39,26 +41,23 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
   }
 
   clearAll() {
-    this._listeners.forEach((set: Set<(e?: E[keyof E]) => void>) =>
-      set.clear(),
-    );
+    this._listeners.forEach((set: Set<Event<E>>) => set.clear());
     this._listeners.clear();
   }
 
-  contains(type: keyof E, callback: (e?: E[keyof E]) => void): boolean {
+  contains(type: keyof E, callback: Event<E>): boolean {
     if (!this._listeners.get(type)) return false;
     return this._listeners.get(type)!.has(callback);
   }
 
-  emit(type: keyof E, data?: E[keyof E]): void {
+  emit(type: keyof E, data: E[keyof E]): void {
     if (!this._listeners.get(type)) {
       // Does not exist any subscribers :(
       return;
     }
 
-    this._listeners.get(type)?.forEach((callback: (e?: E[keyof E]) => void) => {
-      if (data) callback(data);
-      else callback();
+    this._listeners.get(type)?.forEach((callback: Event<E>) => {
+      callback(data);
     });
   }
 }

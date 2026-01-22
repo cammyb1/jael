@@ -4,7 +4,7 @@ export class SparseSet<V> {
   sparse: Map<V, number> = new Map();
 
   *[Symbol.iterator](): Generator<V> {
-    for (let i = this.denseValues.length; i > 0; --i) {
+    for (let i = this.denseValues.length; i >= 0; --i) {
       yield this.denseValues[i];
     }
   }

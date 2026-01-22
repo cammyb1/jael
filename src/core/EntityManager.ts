@@ -20,20 +20,20 @@ class Entity {
   }
 
   has(compKey: string): boolean {
-    return this._world.componentManager.hasComponent(this.id, compKey);
+    return this._world.componentManager.hasComponent(this, compKey);
   }
 
   get(compType: string): any {
-    return this._world.componentManager.getComponent(this.id, compType);
+    return this._world.componentManager.getComponent(this, compType);
   }
 }
 
-export { type Entity };
-
 export interface EntityManagerEvents {
-  onCreate: Entity;
-  onRemove: Entity;
+  create: Entity;
+  destroy: Entity;
 }
+
+export { type Entity };
 
 export class EntityManager extends EventRegistry<EntityManagerEvents> {
   entityMap: SparseSet<Entity> = new SparseSet();
@@ -54,18 +54,22 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     const entity = new Entity(this._world, id);
     this.entityMap.add(entity);
 
-    this.emit("onCreate", entity);
+    this.emit("create", entity);
 
     return entity;
+  }
+
+  exist(entity: Entity): boolean {
+    return this.entityMap.has(entity);
   }
 
   size(): number {
     return this.entityMap.size();
   }
 
-  remove(entity: Entity): Entity {
+  destroy(entity: Entity): Entity {
     this.entityMap.remove(entity);
-    this.emit("onRemove", entity);
+    this.emit("destroy", entity);
     return entity;
   }
 }
