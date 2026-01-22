@@ -1,4 +1,4 @@
-export default class EventManager<E extends Record<string, any> = {}> {
+export default class EventRegistry<E extends Record<string, any> = {}> {
   private _listeners: Map<keyof E, Set<(e?: E[keyof E]) => void>> = new Map();
 
   on(type: keyof E, callback: (e?: E[keyof E]) => void): void {
@@ -39,7 +39,9 @@ export default class EventManager<E extends Record<string, any> = {}> {
   }
 
   clearAll() {
-    this._listeners.forEach((set: Set<(e?: E[keyof E]) => void>) => set.clear());
+    this._listeners.forEach((set: Set<(e?: E[keyof E]) => void>) =>
+      set.clear(),
+    );
     this._listeners.clear();
   }
 

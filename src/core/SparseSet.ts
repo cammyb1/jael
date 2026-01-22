@@ -9,6 +9,10 @@ export class SparseSet<V> {
     }
   }
 
+  get values(): V[] {
+    return this.denseValues;
+  }
+
   add(item: V) {
     if (this.has(item)) return;
     this.denseValues.push(item);

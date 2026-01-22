@@ -1,57 +1,71 @@
+import EventRegistry from "./EventRegistry";
 import { SparseSet } from "./SparseSet";
 import type World from "./World";
 
 class Entity {
   readonly id: number;
-  private world: World;
+  private _world: World;
 
   constructor(world: World, id: number) {
     this.id = id;
-    this.world = world;
+    this._world = world;
   }
 
-  add(compType: string | Record<string, any>, compValue: any) {
-    if (typeof compType !== "string") {
-      Object.keys(compType).forEach((key: string) => {
-        const value: any = compType[key];
-        this.world.addComponent(this, key, value);
-      });
-    } else {
-      this.world.addComponent(this, compType, compValue);
-    }
+  add(compType: string, compValue: any) {
+    this._world.addComponent(this, compType, compValue);
   }
 
   remove(compType: string) {
-    this.world.removeComponent(this, compType);
+    this._world.removeComponent(this, compType);
   }
 
-  get(compType: string) {}
+  has(compKey: string): boolean {
+    return this._world.componentManager.hasComponent(this.id, compKey);
+  }
+
+  get(compType: string): any {
+    return this._world.componentManager.getComponent(this.id, compType);
+  }
 }
 
 export { type Entity };
 
-export class EntityManager {
-  world: World;
-  entityLocations: SparseSet<Entity> = new SparseSet();
+export interface EntityManagerEvents {
+  onCreate: Entity;
+  onRemove: Entity;
+}
+
+export class EntityManager extends EventRegistry<EntityManagerEvents> {
+  entityMap: SparseSet<Entity> = new SparseSet();
   nextId: number = 0;
+  _world: World;
 
   constructor(world: World) {
-    this.world = world;
+    super();
+    this._world = world;
+  }
+
+  get entities(): Entity[] {
+    return this.entityMap.values;
   }
 
   create(): Entity {
     const id = this.nextId++;
-    const entity = new Entity(this.world, id);
-    this.entityLocations.add(entity);
+    const entity = new Entity(this._world, id);
+    this.entityMap.add(entity);
+
+    this.emit("onCreate", entity);
 
     return entity;
   }
 
-  destroy(entity: Entity) {
-    if (typeof entity === "number") {
-      this.entityLocations.remove(entity);
+  size(): number {
+    return this.entityMap.size();
+  }
 
-      // Remove entity from all queries.
-    }
+  remove(entity: Entity): Entity {
+    this.entityMap.remove(entity);
+    this.emit("onRemove", entity);
+    return entity;
   }
 }
