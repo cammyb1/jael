@@ -484,8 +484,10 @@ npm run build
 
 <div align="center">
 
-**Built with ❤️ by [cammyb1](https://github.com/cammyb1)**
-
 [⭐ Star this repo if it helped you!](https://github.com/cammyb1/jael)
+
+[☕ You can buy me a coffee :)](https://buymeacoffee.com/jonathanva5)
+
+**Built with ❤️ by [cammyb1](https://github.com/cammyb1)**
 
 </div>
