@@ -32,12 +32,12 @@ _A modern, performant, and user-friendly Entity Component System library written
 
 - **User Friendly API** - Clean, fluent api that's easy to learn
 - **High Performance** - Optimized SparseSet implementation for fast entity lookups
-- **Minimal Bundle size** - Compact bundle size without dependencies.
+- **Minimal Bundle size** - Compact bundle size without dependencies.(34kb 📦)
 
 ## Installation
 
 ```bash
-npm install @jael/core
+npm install @jael-ecs/core
 ```
 
 ## Quick Start
