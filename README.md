@@ -416,11 +416,14 @@ class MovementSystem implements System {
   }
 }
 
-// ✅ Also good: Use js Object:
-const movementSystem: System = {
-  movementQuery: Query;
-  priority: number = 1;
+// ✅ Also good: extend System for js Object:
 
+type MovementSystem = { movementQuery: Query | null } & System;
+
+const movementSystem: MovementSystem = {
+  movementQuery: null;
+  priority: 1;
+  
   init(){
     this.movementQuery = world.include('position', 'velocity');
   }

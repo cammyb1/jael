@@ -2,7 +2,7 @@ export interface System {
   priority: number;
   init?(): void;
   exit?(): void;
-  update(dt?: number): void;
+  update(): void;
 }
 
 export class SystemManager {
