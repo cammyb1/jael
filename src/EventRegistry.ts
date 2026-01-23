@@ -35,12 +35,12 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
     this.on(type, onceCb);
   }
 
-  clearType(type: keyof E) {
+  clearEvent(type: keyof E) {
     if (!this._listeners.get(type)) return;
     this._listeners.get(type)?.clear();
   }
 
-  clearAll() {
+  clearAllEvents() {
     this._listeners.forEach((set: Set<Event<E>>) => set.clear());
     this._listeners.clear();
   }

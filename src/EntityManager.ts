@@ -11,29 +11,41 @@ class Entity {
     this._world = world;
   }
 
+  /**
+   * Add component to current entity.
+   * @param compType Component name
+   * @param compValue Component value
+   */
   add(compType: string, compValue: any) {
     this._world.addComponent(this, compType, compValue);
   }
 
+  /**
+   * Remove component of current entity.
+   * @param compType Component name
+   */
   remove(compType: string) {
     this._world.removeComponent(this, compType);
   }
 
+  /**
+   * Check if current entity has a component.
+   * @param compType Component name
+   * @returns boolean
+   */
   has(compKey: string): boolean {
     return this._world.componentManager.hasComponent(this, compKey);
   }
 
-  get(compType: string): any {
+  /**
+   * Get passed component schema of current entity.
+   * @param compType Component name
+   * @returns Return component schema with T(any as default) as type
+   */
+  get<T = any>(compType: string): T {
     return this._world.componentManager.getComponent(this, compType);
   }
 }
-
-export interface EntityManagerEvents {
-  create: Entity;
-  destroy: Entity;
-}
-
-export { type Entity };
 
 export class EntityManager extends EventRegistry<EntityManagerEvents> {
   entityMap: SparseSet<Entity> = new SparseSet();
@@ -52,7 +64,7 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
   create(): Entity {
     const id = this.nextId++;
     const entity = new Entity(this._world, id);
-    this.entityMap.add(entity);
+    this.entities.add(entity);
 
     this.emit("create", entity);
 
@@ -60,16 +72,23 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
   }
 
   exist(entity: Entity): boolean {
-    return this.entityMap.has(entity);
+    return this.entities.has(entity);
   }
 
   size(): number {
-    return this.entityMap.size();
+    return this.entities.size();
   }
 
   destroy(entity: Entity): Entity {
-    this.entityMap.remove(entity);
+    this.entities.remove(entity);
     this.emit("destroy", entity);
     return entity;
   }
 }
+
+export interface EntityManagerEvents {
+  create: Entity;
+  destroy: Entity;
+}
+
+export { type Entity };

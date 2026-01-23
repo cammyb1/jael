@@ -61,7 +61,7 @@ export class SparseSet<V> {
     }
   }
 
-  size() {
+  size(): number {
     return this.denseValues.length;
   }
 
@@ -71,7 +71,7 @@ export class SparseSet<V> {
     }
   }
 
-  has(item: V) {
+  has(item: V): boolean {
     return this.sparse.has(item);
   }
 }

@@ -1,19 +1,19 @@
-import EventRegistry from "./core/EventRegistry";
-import { type System, SystemManager } from "./core/SystemManager";
+import EventRegistry from "./EventRegistry";
+import { type System, SystemManager } from "./SystemManager";
 import {
   type Entity,
   EntityManager,
   type EntityManagerEvents,
-} from "./core/EntityManager";
+} from "./EntityManager";
 import {
   type ComponentSchema,
   ComponentManager,
   type ComponentManagerEvents,
-} from "./core/ComponentManager";
-import { Query, type QueryConfig } from "./core/Query";
-import { SparseSet } from "./core/SparseSet";
-import { Time, type TimeEvents } from "./core/Time";
-import World, { type WorldEvents } from "./core/World";
+} from "./ComponentManager";
+import { Query, type QueryConfig } from "./Query";
+import { SparseSet } from "./SparseSet";
+import { Time, type TimeEvents } from "./Time";
+import World, { type WorldEvents } from "./World";
 
 export {
   type System,

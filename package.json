@@ -1,18 +1,30 @@
 {
-  "name": "jael",
+  "name": "@jael/core",
   "version": "1.0.0",
-  "type": "module",
-  "files": [
-    "dist"
+  "description": "Entity Component System library with typescript",
+  "keywords": [
+    "ecs",
+    "ts"
   ],
+  "homepage": "https://github.com/cammyb1/jael#readme",
+  "bugs": {
+    "url": "https://github.com/cammyb1/jael/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cammyb1/jael.git"
+  },
   "main": "./dist/jael-build.cjs",
   "module": "./dist/jael-build.js",
-  "exports": {
-    ".": {
-      "import": "./dist/jael-build.js",
-      "require": "./dist/jael-build.cjs"
-    }
-  },
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "author": "cammyb1",
+  "type": "module",
+  "files": [
+    "dist/**",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

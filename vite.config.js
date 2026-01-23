@@ -13,8 +13,8 @@ export default defineConfig(() => ({
     emptyOutDir: true,
     outDir: "dist",
     lib: {
-      name: "jael",
-      entry: resolve(__dirname, "src/main.ts"),
+      name: "@jael/core",
+      entry: resolve(__dirname, "src/index.ts"),
       fileName: "jael-build",
       formats: ["es", "cjs"],
     },
@@ -22,9 +22,5 @@ export default defineConfig(() => ({
   server: {
     port: 5173,
   },
-  plugins: [
-    dts({
-      insertTypesEntry: true,
-    }),
-  ],
+  plugins: [dts({ tsconfigPath: "./tsconfig.json" })],
 }));
