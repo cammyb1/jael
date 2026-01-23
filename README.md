@@ -71,15 +71,15 @@ world.addComponent(enemy, "velocity", { dx: -1, dy: 0 });
 // Create a system
 const movementSystem: System = {
   priority: 0,
-  update(dt) {
+  update() {
     const query = world.include("position", "velocity");
 
     for (const entity of query.entities) {
       const position = entity.get<Position>("position");
       const velocity = entity.get<Velocity>("velocity");
 
-      position.x += velocity.dx * (dt || 0.016);
-      position.y += velocity.dy * (dt || 0.016);
+      position.x += velocity.dx * (Time.delta || 0.016);
+      position.y += velocity.dy * (Time.delta || 0.016);
     }
   },
 };
@@ -88,8 +88,8 @@ const movementSystem: System = {
 world.addSystem(movementSystem);
 
 // Game loop
-function gameLoop(dt: number) {
-  world.update(dt);
+function gameLoop() {
+  world.update();
 }
 ```
 
@@ -199,8 +199,9 @@ Systems contain the game logic that processes entities with specific components.
 ```typescript
 interface System {
   priority: number; // Execution order (lower = earlier)
+  init?(): void // Runs when added to the world
   exit?(): void; // Cleanup when removed
-  update(dt?: number): void; // Main update logic
+  update(): void; // Main update logic
 }
 ```
 
@@ -209,6 +210,10 @@ interface System {
 ```typescript
 const renderSystem: System = {
   priority: 100, // Render after all other systems
+
+  init(){
+    console.log('This runs first')
+  }
 
   update(dt) {
     const renderableQuery = world.include("position", "sprite");
@@ -404,7 +409,23 @@ class MovementSystem implements System {
     this.movementQuery = world.include('position', 'velocity');
   }
 
-  update(dt?: number) {
+  update() {
+    for (const entity of this.movementQuery.entities) {
+      // Process movement
+    }
+  }
+}
+
+// ✅ Also good: Use js Object:
+const movementSystem: System = {
+  movementQuery: Query;
+  priority: number = 1;
+
+  init(){
+    this.movementQuery = world.include('position', 'velocity');
+  }
+
+  update(){
     for (const entity of this.movementQuery.entities) {
       // Process movement
     }
@@ -412,7 +433,7 @@ class MovementSystem implements System {
 }
 
 // ✅ Also good: Use world.include/exclude for simple cases
-update(dt?: number) {
+update() {
   const entities = this.world.include('position', 'velocity');
   // ...
 }

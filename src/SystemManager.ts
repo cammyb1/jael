@@ -1,5 +1,6 @@
 export interface System {
   priority: number;
+  init?(): void;
   exit?(): void;
   update(dt?: number): void;
 }
@@ -9,6 +10,7 @@ export class SystemManager {
 
   addSystem(system: System) {
     this.systemList.push(system);
+    system.init?.();
     this.reorder();
   }
 
