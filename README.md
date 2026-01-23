@@ -43,7 +43,7 @@ npm install @jael/core
 ## Quick Start
 
 ```typescript
-import { World, System } from "@jael/core";
+import { World, System } from "@jael-ecs/core";
 
 // Create your world
 const world = new World();

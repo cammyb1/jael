@@ -1,5 +1,5 @@
 {
-  "name": "@jael/core",
+  "name": "@jael-ecs/core",
   "version": "1.0.0",
   "description": "Entity Component System library with typescript",
   "keywords": [
