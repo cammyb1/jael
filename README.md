@@ -37,7 +37,7 @@ _A modern, performant, and user-friendly Entity Component System library written
 ## Installation
 
 ```bash
-npm install @jael/core
+npm install @jael-ecs/core
 ```
 
 ## Quick Start
