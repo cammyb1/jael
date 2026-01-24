@@ -1,4 +1,5 @@
 import type { Entity } from "./EntityManager";
+import EventRegistry from "./EventRegistry";
 import { SparseSet } from "./SparseSet";
 import type World from "./World";
 
@@ -7,12 +8,18 @@ export interface QueryConfig {
   exclude: string[];
 }
 
-export class Query {
+export interface QueryEvents {
+  added: Entity;
+  removed: Entity;
+}
+
+export class Query extends EventRegistry<QueryEvents> {
   config: QueryConfig;
   entityMap: SparseSet<Entity>;
   world: World;
 
   constructor(config: QueryConfig, world: World) {
+    super();
     this.config = config;
     this.world = world;
     this.entityMap = new SparseSet();
@@ -40,6 +47,7 @@ export class Query {
   private _checkExistingEntities() {
     for (let entity of this.entities) {
       if (!this.world.exist(entity)) {
+        this.emit("removed", entity);
         this.entityMap.remove(entity);
       }
     }
@@ -49,6 +57,7 @@ export class Query {
     for (let entity of this.world.entities) {
       if (entity && this.hasComponents(entity)) {
         this.entityMap.add(entity);
+        this.emit("added", entity);
       }
     }
     // check if current entities exist in world

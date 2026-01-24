@@ -29,14 +29,15 @@ export default class World extends EventRegistry<WorldEvents> {
     this.entityManager.on("create", (entity: Entity | undefined) => {
       if (entity) {
         this.emit("entityCreated", { entity });
+        this._updateQueries();
       }
-      this._updateQueries();
     });
     this.entityManager.on("destroy", (entity: Entity | undefined) => {
       if (entity) {
         this.emit("entityDestroyed", { entity });
+        this._updateQueries();
+        this.componentManager.clearComponentSchema(entity);
       }
-      this._updateQueries();
     });
     this.componentManager.on(
       "add",

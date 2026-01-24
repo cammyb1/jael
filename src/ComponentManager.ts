@@ -16,16 +16,11 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   constructor(world: World) {
     super();
     this.world = world;
+  }
 
-    this.world.on("entityDestroyed", (payload) => {
-      if (
-        payload &&
-        payload.entity &&
-        this.componentSet.get(payload.entity.id)
-      ) {
-        this.componentSet.delete(payload.entity.id);
-      }
-    });
+  clearComponentSchema(entity: Entity) {
+    if (!this.componentSet.get(entity.id)) return;
+    this.componentSet.delete(entity.id);
   }
 
   addComponent<K extends keyof ComponentSchema>(

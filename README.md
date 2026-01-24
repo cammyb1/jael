@@ -279,6 +279,16 @@ const count = query.entities.size();
 
 // Check if query has any entities
 const isEmpty = query.entities.size() === 0;
+
+// Subscribe to query events
+query.on('added', (entity: Entity) => {
+  // Entity added
+})
+
+query.on('removed', (entity: Entity) => {
+  // Entity added
+})
+
 ```
 
 ### SparseSet
@@ -315,7 +325,7 @@ sparseSet.clear();
 Utility singleton class for managing time and delta time calculations.
 
 ```typescript
-import { Time } from "@jael/core";
+import { Time } from "@jael-ecs/core";
 
 Time.start();
 
@@ -340,6 +350,11 @@ interface WorldEvents {
   componentAdded: { entity: Entity; component: string };
   componentRemoved: { entity: Entity; component: string };
   updated: void;
+}
+
+interface QueryEvents {
+  added: Entity; //Entity added to query entities
+  removed: Entity; //Entity removed to query entities
 }
 
 // Listen to events
