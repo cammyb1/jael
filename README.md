@@ -286,7 +286,7 @@ query.on('added', (entity: Entity) => {
 })
 
 query.on('removed', (entity: Entity) => {
-  // Entity added
+  // Entity removed
 })
 
 ```
