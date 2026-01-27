@@ -1,16 +1,15 @@
-import type { Entity } from "./EntityManager";
 import EventRegistry from "./EventRegistry";
 import type World from "./World";
 
 export type ComponentSchema = Record<string, any>;
 
 export interface ComponentManagerEvents {
-  add: { entity: Entity; component: keyof ComponentSchema };
-  remove: { entity: Entity; component: keyof ComponentSchema };
+  add: { entityId: number; component: keyof ComponentSchema };
+  remove: { entityId: number; component: keyof ComponentSchema };
 }
 
 export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
-  componentSet: Map<number, ComponentSchema> = new Map();
+  componentSet: { [k: number]: ComponentSchema } = {};
   world: World;
 
   constructor(world: World) {
@@ -18,59 +17,55 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     this.world = world;
   }
 
-  clearComponentSchema(entity: Entity) {
-    if (!this.componentSet.get(entity.id)) return;
-    this.componentSet.delete(entity.id);
+  clearComponentSchema(entityId: number) {
+    if (!this.componentSet[entityId]) return;
+    delete this.componentSet[entityId];
   }
 
   addComponent<K extends keyof ComponentSchema>(
-    entity: Entity,
+    entityId: number,
     key: K,
     value: ComponentSchema[K],
   ) {
-    const oldSchema: ComponentSchema | undefined = this.componentSet.get(
-      entity.id,
-    );
-    if (!oldSchema) {
-      this.componentSet.set(entity.id, { [key]: value });
+    const schema: ComponentSchema | undefined = this.componentSet[entityId];
+    if (!schema) {
+      this.componentSet[entityId] = { [key]: value };
     } else {
-      oldSchema[key] = value;
+      schema[key] = value;
     }
 
-    this.emit("add", { entity, component: key });
+    this.emit("add", { entityId, component: key });
   }
 
   getComponent<K extends keyof ComponentSchema>(
-    entity: Entity,
+    entityId: number,
     key: K,
   ): ComponentSchema[K] | undefined {
-    if (!this.hasComponent(entity, key)) return;
-    const schema = this.componentSet.get(entity.id)!;
-
-    return schema[key];
+    if (!this.hasComponent(entityId, key)) return;
+    return this.componentSet[entityId][key];
   }
 
   hasComponent<K extends keyof ComponentSchema>(
-    entity: Entity,
+    entityId: number,
     key: K,
   ): boolean {
-    const schema = this.componentSet.get(entity.id);
+    const schema = this.componentSet[entityId];
     if (!schema) return false;
     return key in schema;
   }
 
-  removeComponent<K extends keyof ComponentSchema>(entity: Entity, key: K) {
-    if (!this.componentSet.get(entity.id)) return;
+  removeComponent<K extends keyof ComponentSchema>(entityId: number, key: K) {
+    if (!this.componentSet[entityId]) return;
 
-    const schema = this.componentSet.get(entity.id);
+    const schema = this.componentSet[entityId];
     if (schema && schema[key] !== undefined) {
       delete schema[key];
 
       if (Object.keys(schema).length === 0) {
-        this.componentSet.delete(entity.id);
+        delete this.componentSet[entityId]
       }
 
-      this.emit("remove", { entity, component: key });
+      this.emit("remove", { entityId, component: key });
     }
   }
 }

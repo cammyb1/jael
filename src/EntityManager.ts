@@ -2,7 +2,7 @@ import EventRegistry from "./EventRegistry";
 import { SparseSet } from "./SparseSet";
 import type World from "./World";
 
-class Entity {
+export class Entity {
   readonly id: number;
   private _world: World;
 
@@ -17,7 +17,7 @@ class Entity {
    * @param compValue Component value
    */
   add(compType: string, compValue: any) {
-    this._world.addComponent(this, compType, compValue);
+    this._world.addComponent(this.id, compType, compValue);
   }
 
   /**
@@ -25,7 +25,7 @@ class Entity {
    * @param compType Component name
    */
   remove(compType: string) {
-    this._world.removeComponent(this, compType);
+    this._world.removeComponent(this.id, compType);
   }
 
   /**
@@ -34,7 +34,7 @@ class Entity {
    * @returns boolean
    */
   has(compKey: string): boolean {
-    return this._world.componentManager.hasComponent(this, compKey);
+    return this._world.componentManager.hasComponent(this.id, compKey);
   }
 
   /**
@@ -43,12 +43,12 @@ class Entity {
    * @returns Return component schema with T(any as default) as type
    */
   get<T = any>(compType: string): T {
-    return this._world.componentManager.getComponent(this, compType);
+    return this._world.componentManager.getComponent(this.id, compType);
   }
 }
 
 export class EntityManager extends EventRegistry<EntityManagerEvents> {
-  entityMap: SparseSet<Entity> = new SparseSet();
+  entityMap: SparseSet<number> = new SparseSet();
   nextId: number = 0;
   _world: World;
 
@@ -57,38 +57,35 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     this._world = world;
   }
 
-  get entities(): SparseSet<Entity> {
+  get entities(): SparseSet<number> {
     return this.entityMap;
   }
 
-  create(): Entity {
+  create(): number {
     const id = this.nextId++;
-    const entity = new Entity(this._world, id);
-    this.entities.add(entity);
+    this.entities.add(id);
 
-    this.emit("create", entity);
+    this.emit("create", id);
 
-    return entity;
+    return id;
   }
 
-  exist(entity: Entity): boolean {
-    return this.entities.has(entity);
+  exist(id: number): boolean {
+    return this.entities.has(id);
   }
 
   size(): number {
     return this.entities.size();
   }
 
-  destroy(entity: Entity): Entity {
-    this.entities.remove(entity);
-    this.emit("destroy", entity);
-    return entity;
+  destroy(id: number): number {
+    this.entities.remove(id);
+    this.emit("destroy", id);
+    return id;
   }
 }
 
 export interface EntityManagerEvents {
-  create: Entity;
-  destroy: Entity;
+  create: number;
+  destroy: number;
 }
-
-export { type Entity };

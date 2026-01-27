@@ -60,13 +60,19 @@ interface Velocity {
 }
 
 // Create entities
-const player = world.create();
-world.addComponent(player, "position", { x: 0, y: 0 });
-world.addComponent(player, "velocity", { dx: 1, dy: 1 });
+const playerId = world.create();
+world.addComponent(playerId, "position", { x: 0, y: 0 });
+world.addComponent(playerId, "velocity", { dx: 1, dy: 1 });
 
-const enemy = world.create();
-world.addComponent(enemy, "position", { x: 10, y: 10 });
-world.addComponent(enemy, "velocity", { dx: -1, dy: 0 });
+const enemyId = world.create();
+world.addComponent(enemyId, "position", { x: 10, y: 10 });
+world.addComponent(enemyId, "velocity", { dx: -1, dy: 0 });
+
+// Using Entity Proxy
+const playerId = world.create();
+const player = world.getEntity(playerId);
+player.add("position", { x: 0, y: 0 });
+player.add("velocity", { dx: 1, dy: 1 });
 
 // Create a system
 const movementSystem: System = {
@@ -74,9 +80,19 @@ const movementSystem: System = {
   update() {
     const query = world.include("position", "velocity");
 
-    for (const entity of query.entities) {
+    // Get direct proxy access
+    query.entities.forEach((entity) => {
       const position = entity.get<Position>("position");
       const velocity = entity.get<Velocity>("velocity");
+
+      position.x += velocity.dx * (Time.delta || 0.016);
+      position.y += velocity.dy * (Time.delta || 0.016);
+    });
+
+    // Get entity ids from query
+    for (const entityId of query.ids) {
+      const position = this.world.getComponent<Position>(entityId, "position");
+      const velocity = this.world.getComponent<Velocity>(entityId, "velocity");
 
       position.x += velocity.dx * (Time.delta || 0.016);
       position.y += velocity.dy * (Time.delta || 0.016);
@@ -111,29 +127,26 @@ The central hub that manages entities, components, and systems.
 
 ```typescript
 // Create a new entity
-const entity = world.create();
+const entityId = world.create();
 
 // Destroy an entity
-world.destroy(entity);
+world.destroy(entityId);
 
 // Check if entity exists
-const exists = world.exist(entity);
+const exists = world.exist(entityId);
 ```
 
 #### Component Management
 
 ```typescript
 // Add component
-world.addComponent(entity, "position", { x: 0, y: 0 });
+world.addComponent(entityId, "position", { x: 0, y: 0 });
 
 // Remove component
-world.removeComponent(entity, "position");
+world.removeComponent(entityId, "position");
 
 // Get component
-const position = entity.get<Position>("position");
-
-// Check if entity has component
-const hasPosition = entity.has("position");
+const position = world.getComponent<Position>(entityId, "position");
 ```
 
 #### System Management
@@ -149,7 +162,7 @@ world.removeSystem(yourSystem);
 #### Events
 
 ```typescript
-// Listen to world events
+// Listen to world events ( returns entity proxy for easy reading )
 world.on("entityCreated", ({ entity }) => {
   console.log("Entity created:", entity);
 });
@@ -173,11 +186,12 @@ world.on("updated", () => {
 
 ### Entity
 
-Base entity class for intuitive component management
+Base entity class for intuitive component management as proxy around id
 
 ```typescript
 // Create entity
-const entity = world.create();
+const entityId = world.create();
+const entity = world.getEntity(entityId); // Returns Entity class proxy
 
 // Add component
 entity.add("position", { x: 0, y: 0 });
@@ -190,6 +204,9 @@ const posExist = entity.has("position");
 
 // Get curren value of the component
 const compSchema = entity.get("position");
+
+entity.id // Returns unique entity id from proxy
+
 ```
 
 ### System
@@ -199,7 +216,7 @@ Systems contain the game logic that processes entities with specific components.
 ```typescript
 interface System {
   priority: number; // Execution order (lower = earlier)
-  init?(): void // Runs when added to the world
+  init?(): void; // Runs when added to the world
   exit?(): void; // Cleanup when removed
   update(): void; // Main update logic
 }
@@ -218,13 +235,13 @@ const renderSystem: System = {
   update(dt) {
     const renderableQuery = world.include("position", "sprite");
 
-    for (const entity of renderableQuery.entities) {
+    renderableQuery.entities.forEach((entity) => {
       const position = entity.get<Position>("position");
       const sprite = entity.get<Sprite>("sprite");
 
       // Render entity
       drawSprite(sprite, position.x, position.y);
-    }
+    })
   },
 
   exit() {
@@ -266,29 +283,36 @@ const complexQuery2 = world.include("position", "health").exclude("static");
 #### Accessing Results
 
 ```typescript
-// Iterate through entities
-for (const entity of query.entities) {
-  // Process entity
+// Iterate through entities as proxy
+query.entities.forEach((entity) => {
+  // Process Entity proxy
+})
+
+// Iterate through entities ids
+for(const entityId of query.ids){
+  // Process Entity id
 }
 
+
+
 // Get the first value of the query
-const first = query.entities.first();
+const first = query.entities[0];
+const firstId = query.ids.first()
 
 // Check query size
-const count = query.entities.size();
+const count = query.size();
 
 // Check if query has any entities
-const isEmpty = query.entities.size() === 0;
+const isEmpty = query.size() === 0;
 
 // Subscribe to query events
-query.on('added', (entity: Entity) => {
+query.on("added", (entityId: number) => {
   // Entity added
-})
+});
 
-query.on('removed', (entity: Entity) => {
+query.on("removed", (entityId: number) => {
   // Entity removed
-})
-
+});
 ```
 
 ### SparseSet
@@ -353,8 +377,8 @@ interface WorldEvents {
 }
 
 interface QueryEvents {
-  added: Entity; //Entity added to query entities
-  removed: Entity; //Entity removed to query entities
+  added: number; //EntityId added to query entities
+  removed: number; //EntityId removed to query entities
 }
 
 // Listen to events
@@ -369,7 +393,7 @@ world.emit("entityCreated", { entity: someEntity });
 world.off("entityCreated", handler);
 
 // Romeve all listeners of a type
-world.clearEvent('type')
+world.clearEvent("type");
 
 // Remove all listeners
 world.clearAllEvents();
@@ -425,8 +449,8 @@ class MovementSystem implements System {
   }
 
   update() {
-    for (const entity of this.movementQuery.entities) {
-      // Process movement
+    for(const entityId of this.movementQuery.ids){
+      // Process movement using entityId
     }
   }
 }
@@ -438,13 +462,13 @@ type MovementSystem = { movementQuery: Query | null } & System;
 const movementSystem: MovementSystem = {
   movementQuery: null;
   priority: 1;
-  
+
   init(){
     this.movementQuery = world.include('position', 'velocity');
   }
 
   update(){
-    for (const entity of this.movementQuery.entities) {
+    for (const entityId of this.movementQuery.ids) {
       // Process movement
     }
   }
@@ -461,7 +485,7 @@ update() {
 
 ```typescript
 // Remember to clean up when removing entities
-world.destroy(entity); // Automatically removes all components
+world.destroy(entityId); // Automatically removes all components
 
 // Clean up systems if they have resources
 system.exit?.(); // Called automatically when removed from world

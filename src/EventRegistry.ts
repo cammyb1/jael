@@ -1,9 +1,10 @@
-export type Event<E> = (e: E[keyof E]) => void;
+export type Event<V> = { [key: string]: V };
+export type EventCallback<V> = (event: V[keyof V]) => void;
 
-export default class EventRegistry<E extends Record<string, any> = {}> {
-  private _listeners: Map<keyof E, Set<Event<E>>> = new Map();
+export default class EventRegistry<E extends Event<any> = {}> {
+  private _listeners: Map<keyof E, Set<EventCallback<E>>> = new Map();
 
-  on(type: keyof E, callback: Event<E>): void {
+  on(type: keyof E, callback: EventCallback<E>): void {
     if (this.contains(type, callback)) {
       return;
     }
@@ -15,7 +16,7 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
     }
   }
 
-  off(type: keyof E, callback: Event<E>): void {
+  off(type: keyof E, callback: EventCallback<E>): void {
     if (!this.contains(type, callback)) {
       return;
     }
@@ -26,7 +27,7 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
     }
   }
 
-  once(type: keyof E, callback: Event<E>): void {
+  once(type: keyof E, callback: EventCallback<E>): void {
     const onceCb: (e?: E[keyof E]) => void = ((event: E[keyof E]) => {
       callback(event);
       this.off(type, onceCb);
@@ -41,11 +42,11 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
   }
 
   clearAllEvents() {
-    this._listeners.forEach((set: Set<Event<E>>) => set.clear());
+    this._listeners.forEach((set: Set<EventCallback<E>>) => set.clear());
     this._listeners.clear();
   }
 
-  contains(type: keyof E, callback: Event<E>): boolean {
+  contains(type: keyof E, callback: EventCallback<E>): boolean {
     if (!this._listeners.get(type)) return false;
     return this._listeners.get(type)!.has(callback);
   }
@@ -56,7 +57,7 @@ export default class EventRegistry<E extends Record<string, any> = {}> {
       return;
     }
 
-    this._listeners.get(type)?.forEach((callback: Event<E>) => {
+    this._listeners.get(type)?.forEach((callback: EventCallback<E>) => {
       callback(data);
     });
   }

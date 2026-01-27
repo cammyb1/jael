@@ -1,5 +1,5 @@
 import { ComponentManager, type ComponentSchema } from "./ComponentManager";
-import { EntityManager, type Entity } from "./EntityManager";
+import { Entity, EntityManager } from "./EntityManager";
 import EventRegistry from "./EventRegistry";
 import { Query, type QueryConfig } from "./Query";
 import { SparseSet } from "./SparseSet";
@@ -21,49 +21,63 @@ export default class World extends EventRegistry<WorldEvents> {
 
   constructor() {
     super();
-
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager(this);
     this.systemManager = new SystemManager();
 
-    this.entityManager.on("create", (entity: Entity | undefined) => {
-      if (entity) {
-        this.emit("entityCreated", { entity });
+    this.entityManager.on("create", (entityId: number) => {
+      const entityInstance = this.getEntity(entityId);
+      if (entityInstance) {
+        this.emit("entityCreated", { entity: entityInstance });
         this._updateQueries();
       }
     });
-    this.entityManager.on("destroy", (entity: Entity | undefined) => {
-      if (entity) {
-        this.emit("entityDestroyed", { entity });
+    this.entityManager.on("destroy", (entityId: number) => {
+      const entityInstance = this.getEntity(entityId);
+      if (entityInstance) {
+        this.emit("entityCreated", { entity: entityInstance });
         this._updateQueries();
-        this.componentManager.clearComponentSchema(entity);
+        this.componentManager.clearComponentSchema(entityId);
       }
     });
     this.componentManager.on(
       "add",
-      (payload: { entity: Entity; component: keyof ComponentSchema }) => {
-        this.emit("componentAdded", {
-          entity: payload.entity,
-          component: payload.component,
-        });
-        this._updateQueries();
+      (payload: { entityId: number; component: keyof ComponentSchema }) => {
+        const entityInstance = this.getEntity(payload.entityId);
+        if (entityInstance) {
+          this.emit("componentAdded", {
+            entity: entityInstance,
+            component: payload.component,
+          });
+          this._updateQueries();
+        }
       },
     );
     this.componentManager.on(
       "remove",
-      (payload: { entity: Entity; component: keyof ComponentSchema }) => {
-        this.emit("componentRemoved", {
-          entity: payload.entity,
-          component: payload.component,
-        });
-        this._updateQueries();
+      (payload: { entityId: number; component: keyof ComponentSchema }) => {
+        const entityInstance = this.getEntity(payload.entityId);
+        if (entityInstance) {
+          this.emit("componentRemoved", {
+            entity: entityInstance,
+            component: payload.component,
+          });
+          this._updateQueries();
+        }
       },
     );
 
     this.queries = new Map();
   }
 
-  get entities(): SparseSet<Entity> {
+  getEntity(id: number): Entity | undefined {
+    if (this.entityManager.exist(id)) {
+      return new Entity(this, id);
+    }
+    return;
+  }
+
+  get entityIds(): SparseSet<number> {
     return this.entityManager.entities;
   }
 
@@ -83,8 +97,8 @@ export default class World extends EventRegistry<WorldEvents> {
     this.queries.forEach((query: Query) => query.checkEntities());
   }
 
-  exist(entity: Entity): boolean {
-    return this.entityManager.exist(entity);
+  exist(entityId: number): boolean {
+    return this.entityManager.exist(entityId);
   }
 
   include(...comps: string[]): Query {
@@ -95,12 +109,12 @@ export default class World extends EventRegistry<WorldEvents> {
     return this.query({ include: [], exclude: comps });
   }
 
-  create(): Entity {
+  create(): number {
     return this.entityManager.create();
   }
 
-  destroy(entity: Entity) {
-    this.entityManager.destroy(entity);
+  destroy(entityId: number) {
+    this.entityManager.destroy(entityId);
   }
 
   addSystem(sys: System) {
@@ -111,12 +125,16 @@ export default class World extends EventRegistry<WorldEvents> {
     this.systemManager.removeSystem(sys);
   }
 
-  addComponent(entity: Entity, compKey: string, compValue: any) {
-    this.componentManager.addComponent(entity, compKey, compValue);
+  addComponent(entityId: number, compKey: string, compValue: any) {
+    this.componentManager.addComponent(entityId, compKey, compValue);
   }
 
-  removeComponent(entity: Entity, compKey: string) {
-    this.componentManager.removeComponent(entity, compKey);
+  getComponent<T>(entityId: number, compKey: string): T {
+    return this.componentManager.getComponent(entityId, compKey);
+  }
+
+  removeComponent(entityId: number, compKey: string) {
+    this.componentManager.removeComponent(entityId, compKey);
   }
 
   update() {

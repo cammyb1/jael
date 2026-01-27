@@ -35,8 +35,8 @@ export class SparseSet<V> {
   }
 
   indexOf(item: V): number {
-    if (!this.sparse.get(item)) return -1;
-    return this.sparse.get(item)!;
+    const index = this.sparse.get(item);
+    return index !== undefined ? index : -1;
   }
 
   remove(item: V) {
