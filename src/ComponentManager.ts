@@ -27,6 +27,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     key: K,
     value: ComponentSchema[K],
   ) {
+    if (!this.world.exist(entityId)) return;
     const schema: ComponentSchema | undefined = this.componentSet[entityId];
     if (!schema) {
       this.componentSet[entityId] = { [key]: value };
@@ -62,7 +63,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
       delete schema[key];
 
       if (Object.keys(schema).length === 0) {
-        delete this.componentSet[entityId]
+        delete this.componentSet[entityId];
       }
 
       this.emit("remove", { entityId, component: key });

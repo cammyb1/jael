@@ -25,56 +25,43 @@ export default class World extends EventRegistry<WorldEvents> {
     this.componentManager = new ComponentManager(this);
     this.systemManager = new SystemManager();
 
+    // We return a new instance proxy to make sure we get the last version ( before removed )
     this.entityManager.on("create", (entityId: number) => {
-      const entityInstance = this.getEntity(entityId);
-      if (entityInstance) {
-        this.emit("entityCreated", { entity: entityInstance });
-        this._updateQueries();
-      }
+      this.emit("entityCreated", {
+        entity: new Entity(this, entityId),
+      });
+      this._updateQueries();
     });
     this.entityManager.on("destroy", (entityId: number) => {
+      this.emit("entityDestroyed", {
+        entity: new Entity(this, entityId),
+      });
+      this._updateQueries();
+      this.componentManager.clearComponentSchema(entityId);
+    });
+    this.componentManager.on("add", ({ entityId, component }) => {
+      this.emit("componentAdded", {
+        entity: new Entity(this, entityId),
+        component,
+      });
+      this._updateQueries();
+    });
+    this.componentManager.on("remove", ({ entityId, component }) => {
       const entityInstance = this.getEntity(entityId);
       if (entityInstance) {
-        this.emit("entityCreated", { entity: entityInstance });
-        this._updateQueries();
-        this.componentManager.clearComponentSchema(entityId);
+        this.emit("componentRemoved", {
+          entity: new Entity(this, entityId),
+          component,
+        });
       }
+      this._updateQueries();
     });
-    this.componentManager.on(
-      "add",
-      (payload: { entityId: number; component: keyof ComponentSchema }) => {
-        const entityInstance = this.getEntity(payload.entityId);
-        if (entityInstance) {
-          this.emit("componentAdded", {
-            entity: entityInstance,
-            component: payload.component,
-          });
-          this._updateQueries();
-        }
-      },
-    );
-    this.componentManager.on(
-      "remove",
-      (payload: { entityId: number; component: keyof ComponentSchema }) => {
-        const entityInstance = this.getEntity(payload.entityId);
-        if (entityInstance) {
-          this.emit("componentRemoved", {
-            entity: entityInstance,
-            component: payload.component,
-          });
-          this._updateQueries();
-        }
-      },
-    );
 
     this.queries = new Map();
   }
 
   getEntity(id: number): Entity | undefined {
-    if (this.entityManager.exist(id)) {
-      return new Entity(this, id);
-    }
-    return;
+    return this.exist(id) ? new Entity(this, id) : undefined;
   }
 
   get entityIds(): SparseSet<number> {
