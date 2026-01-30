@@ -6,10 +6,10 @@ import { SparseSet } from "./SparseSet";
 import { SystemManager, type System } from "./SystemManager";
 
 export interface WorldEvents {
-  entityCreated: { entity: Entity };
-  entityDestroyed: { entity: Entity };
-  componentAdded: { entity: Entity; component: keyof ComponentSchema };
-  componentRemoved: { entity: Entity; component: keyof ComponentSchema };
+  entityCreated: { entityId: number };
+  entityDestroyed: { entityId: number };
+  componentAdded: { entityId: number; component: keyof ComponentSchema };
+  componentRemoved: { entityId: number; component: keyof ComponentSchema };
   updated: void;
 }
 
@@ -18,30 +18,32 @@ export default class World extends EventRegistry<WorldEvents> {
   componentManager: ComponentManager;
   systemManager: SystemManager;
   queries: Map<number, Query>;
+  version: number;
 
   constructor() {
     super();
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager(this);
     this.systemManager = new SystemManager();
+    this.version = 0;
 
     // We return a new instance proxy to make sure we get the last version ( before removed )
     this.entityManager.on("create", (entityId: number) => {
       this.emit("entityCreated", {
-        entity: new Entity(this, entityId),
+        entityId,
       });
       this._updateQueries();
     });
     this.entityManager.on("destroy", (entityId: number) => {
       this.emit("entityDestroyed", {
-        entity: new Entity(this, entityId),
+        entityId,
       });
       this._updateQueries();
       this.componentManager.clearComponentSchema(entityId);
     });
     this.componentManager.on("add", ({ entityId, component }) => {
       this.emit("componentAdded", {
-        entity: new Entity(this, entityId),
+        entityId,
         component,
       });
       this._updateQueries();
@@ -50,7 +52,7 @@ export default class World extends EventRegistry<WorldEvents> {
       const entityInstance = this.getEntity(entityId);
       if (entityInstance) {
         this.emit("componentRemoved", {
-          entity: new Entity(this, entityId),
+          entityId,
           component,
         });
       }
@@ -81,7 +83,15 @@ export default class World extends EventRegistry<WorldEvents> {
   }
 
   private _updateQueries() {
-    this.queries.forEach((query: Query) => query.checkEntities());
+    const entities = this.componentManager.dirtyEntities;
+    this.queries.forEach((query: Query) => {
+      query.markDirty();
+      if (entities.size > 0) {
+        query.checkEntities();
+      }
+    });
+    this.componentManager.cleanDirtyEntities();
+    this.version++;
   }
 
   exist(entityId: number): boolean {

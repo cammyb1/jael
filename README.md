@@ -25,6 +25,7 @@ _A modern, performant, and user-friendly Entity Component System library written
   - [EventRegistry](#event-registry)
 - [Best Practices](#best-practices)
 - [Advanced Usage](#advanced-usage)
+- [Planned Features](#planned-features)
 - [Contributing](#contributing)
 - [Acknowledgments](#acknowledgments)
 
@@ -89,15 +90,6 @@ const movementSystem: System = {
       position.x += velocity.dx * (Time.delta || 0.016);
       position.y += velocity.dy * (Time.delta || 0.016);
     });
-
-    // Get entity ids from query
-    for (const entityId of query.ids) {
-      const position = this.world.getComponent<Position>(entityId, "position");
-      const velocity = this.world.getComponent<Velocity>(entityId, "velocity");
-
-      position.x += velocity.dx * (Time.delta || 0.016);
-      position.y += velocity.dy * (Time.delta || 0.016);
-    }
   },
 };
 
@@ -163,21 +155,21 @@ world.removeSystem(yourSystem);
 #### Events
 
 ```typescript
-// Listen to world events ( returns entity proxy for easy reading )
-world.on("entityCreated", ({ entity }) => {
-  console.log("Entity created:", entity);
+// Listen to world events
+world.on("entityCreated", ({ entityId }) => {
+  console.log("Entity created:", entityId);
 });
 
-world.on("entityDestroyed", ({ entity }) => {
-  console.log("Entity destroyed:", entity);
+world.on("entityDestroyed", ({ entityId }) => {
+  console.log("Entity destroyed:", entityId);
 });
 
-world.on("componentAdded", ({ entity, component }) => {
-  console.log(`Component ${component} added to entity`);
+world.on("componentAdded", ({ entityId, component }) => {
+  console.log(`Component ${component} added to entity ${entityId}`);
 });
 
-world.on("componentRemoved", ({ entity, component }) => {
-  console.log(`Component ${component} removed from entity`);
+world.on("componentRemoved", ({ entityId, component }) => {
+  console.log(`Component ${component} removed from entity ${entityId}`);
 });
 
 world.on("updated", () => {
@@ -206,8 +198,7 @@ const posExist = entity.has("position");
 // Get curren value of the component
 const compSchema = entity.get("position");
 
-entity.id // Returns unique entity id from proxy
-
+entity.id; // Returns unique entity id from proxy
 ```
 
 ### System
@@ -287,18 +278,16 @@ const complexQuery2 = world.include("position", "health").exclude("static");
 // Iterate through entities as proxy
 query.entities.forEach((entity) => {
   // Process Entity proxy
-})
+});
 
 // Iterate through entities ids
-for(const entityId of query.ids){
+for (const entityId of query.ids) {
   // Process Entity id
 }
 
-
-
 // Get the first value of the query
 const first = query.entities[0];
-const firstId = query.ids.first()
+const firstId = query.ids.first();
 
 // Check query size
 const count = query.size();
@@ -388,7 +377,7 @@ world.on("entityCreated", (data) => {
 });
 
 // Emit events (handled internally by World)
-world.emit("entityCreated", { entity: someEntity });
+world.emit("entityCreated", { entityId });
 
 // Remove listeners
 world.off("entityCreated", handler);
@@ -450,9 +439,9 @@ class MovementSystem implements System {
   }
 
   update() {
-    for(const entityId of this.movementQuery.ids){
-      // Process movement using entityId
-    }
+    this.movementQuery.entities.forEach((entity) => {
+      // Handle entity movement
+    })
   }
 }
 
@@ -469,9 +458,9 @@ const movementSystem: MovementSystem = {
   }
 
   update(){
-    for (const entityId of this.movementQuery.ids) {
-      // Process movement
-    }
+    this.movementQuery?.entities.forEach((entity) => {
+      // Handle entity movement
+    })
   }
 }
 
@@ -514,6 +503,13 @@ world.on("playerScored", ({ points }) => {
 });
 ```
 
+## Planned Features
+
+- Implement basic one level tag manager.
+- Instancing / Prefab system with searilzation.
+- Entity with childrens and parents.
+- React wrapper (?)
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
@@ -542,6 +538,7 @@ npm run build
 ## Acknowledgments
 
 - Inspiration from ECS frameworks like [ECSY](https://github.com/ecsyjs/ecsy) and [Bevy](https://github.com/bevyengine/bevy)
+- Deep digging documentation at [Austin Morlan Post](https://austinmorlan.com/posts/entity_component_system/)
 - TypeScript for providing excellent type safety and developer experience
 
 ---

@@ -16,18 +16,22 @@ export interface QueryEvents {
 export class Query extends EventRegistry<QueryEvents> {
   private config: QueryConfig;
   private entityMap: SparseSet<number>;
-  private entityInstancesCache: Map<number, Entity>;
   private world: World;
+  private lastVersion: number = 0;
+  dirty: boolean;
 
   constructor(config: QueryConfig, world: World) {
     super();
     this.config = config;
     this.world = world;
-    this.entityInstancesCache = new Map();
     this.entityMap = new SparseSet();
+    this.dirty = false;
 
-    this.on("removed", (entityId) => {
-      this.entityInstancesCache.delete(entityId);
+    this.world.on("entityDestroyed", ({ entityId }) => {
+      if (this.entityMap.has(entityId)) {
+        this.emit("removed", entityId);
+        this.entityMap.remove(entityId);
+      }
     });
   }
 
@@ -55,33 +59,11 @@ export class Query extends EventRegistry<QueryEvents> {
     return this.entityMap;
   }
 
-  private getCachedEntity(id: number): Entity | undefined {
-    const existingEntity = this.entityInstancesCache.get(id);
-    if (existingEntity) {
-      return existingEntity;
-    } else {
-      const entity = this.world.getEntity(id);
-      if (entity) {
-        this.entityInstancesCache.set(id, entity);
-        return entity;
-      }
-      return;
-    }
-  }
-
   get entities(): Entity[] {
     const values: Entity[] = [];
-
-    // Queries cache threshold
-    const isOverSize = this.entityMap.size() > 100;
     this.entityMap.forEach((item) => {
-      if (isOverSize) {
-        const entity = this.getCachedEntity(item);
-        if (entity) values.push(entity);
-      } else {
-        const entity = this.world.getEntity(item);
-        if (entity) values.push(entity);
-      }
+      const entity = this.world.getEntity(item);
+      if (entity) values.push(entity);
     });
     return values;
   }
@@ -94,26 +76,24 @@ export class Query extends EventRegistry<QueryEvents> {
     return this.world.exclude(...comps);
   }
 
-  private _checkExistingEntities() {
-    for (let entityId of this.ids) {
-      if (!this.world.exist(entityId)) {
-        this.emit("removed", entityId);
-        this.entityMap.remove(entityId);
-      }
-    }
+  markDirty() {
+    this.dirty = true;
   }
 
-  checkEntities() {
-    this.entityInstancesCache.clear();
+  checkEntities(entities?: Set<number>) {
+    if (!this.dirty || this.world.version === this.lastVersion) return;
 
-    for (let entityId of this.world.entityIds) {
+    const checkedEntities = entities || this.world.entityIds;
+
+    for (let entityId of checkedEntities) {
       if (this.hasComponents(entityId)) {
         this.entityMap.add(entityId);
         this.emit("added", entityId);
       }
     }
-    // check if current entities exist in world
-    this._checkExistingEntities();
+
+    this.dirty = false;
+    this.lastVersion = this.world.version;
   }
 
   static getHash(config: QueryConfig): number {

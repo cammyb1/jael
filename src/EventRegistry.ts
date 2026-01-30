@@ -1,10 +1,7 @@
-export type Event<V> = { [key: string]: V };
-export type EventCallback<V> = (event: V[keyof V]) => void;
+export default class EventRegistry<E extends { [key: string]: any } = {}> {
+  private _listeners: Map<string, Set<Function>> = new Map();
 
-export default class EventRegistry<E extends Event<any> = {}> {
-  private _listeners: Map<keyof E, Set<EventCallback<E>>> = new Map();
-
-  on(type: keyof E, callback: EventCallback<E>): void {
+  on<K extends string>(type: K, callback: (e: E[K]) => void): void {
     if (this.contains(type, callback)) {
       return;
     }
@@ -16,7 +13,7 @@ export default class EventRegistry<E extends Event<any> = {}> {
     }
   }
 
-  off(type: keyof E, callback: EventCallback<E>): void {
+  off<K extends string>(type: K, callback: (e: E[K]) => void): void {
     if (!this.contains(type, callback)) {
       return;
     }
@@ -27,37 +24,37 @@ export default class EventRegistry<E extends Event<any> = {}> {
     }
   }
 
-  once(type: keyof E, callback: EventCallback<E>): void {
-    const onceCb: (e?: E[keyof E]) => void = ((event: E[keyof E]) => {
+  once<K extends string>(type: K, callback: (e: E[K]) => void): void {
+    const onceCb: (e: E[K]) => void = (event: E[K]) => {
       callback(event);
       this.off(type, onceCb);
-    }) as (e?: E[keyof E]) => void;
+    };
 
     this.on(type, onceCb);
   }
 
-  clearEvent(type: keyof E) {
+  clearEvent<K extends string>(type: K) {
     if (!this._listeners.get(type)) return;
     this._listeners.get(type)?.clear();
   }
 
   clearAllEvents() {
-    this._listeners.forEach((set: Set<EventCallback<E>>) => set.clear());
+    this._listeners.forEach((set: Set<Function>) => set.clear());
     this._listeners.clear();
   }
 
-  contains(type: keyof E, callback: EventCallback<E>): boolean {
+  contains<K extends string>(type: K, callback: (e: E[K]) => void): boolean {
     if (!this._listeners.get(type)) return false;
     return this._listeners.get(type)!.has(callback);
   }
 
-  emit(type: keyof E, data: E[keyof E]): void {
+  emit<K extends string>(type: K, data?: E[K]): void {
     if (!this._listeners.get(type)) {
       // Does not exist any subscribers :(
       return;
     }
 
-    this._listeners.get(type)?.forEach((callback: EventCallback<E>) => {
+    this._listeners.get(type)?.forEach((callback) => {
       callback(data);
     });
   }
