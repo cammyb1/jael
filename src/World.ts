@@ -86,9 +86,7 @@ export default class World extends EventRegistry<WorldEvents> {
     const entities = this.componentManager.dirtyEntities;
     this.queries.forEach((query: Query) => {
       query.markDirty();
-      if (entities.size > 0) {
-        query.checkEntities();
-      }
+      query.checkEntities(entities.size > 0 ? entities : undefined);
     });
     this.componentManager.cleanDirtyEntities();
     this.version++;
