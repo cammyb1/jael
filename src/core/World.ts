@@ -1,7 +1,10 @@
-import { ComponentManager, type ComponentSchema } from "./managers/ComponentManager";
+import {
+  ComponentManager,
+  type ComponentSchema,
+} from "./managers/ComponentManager";
 import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
-import { Query, type QueryConfig } from "./Query";
+import { QueryManager, Query, type QueryConfig } from "./managers/QueryManager";
 import { SparseSet } from "./helpers/SparseSet";
 import { SystemManager, type System } from "./managers/SystemManager";
 
@@ -17,17 +20,17 @@ export default class World extends EventRegistry<WorldEvents> {
   entityManager: EntityManager;
   componentManager: ComponentManager;
   systemManager: SystemManager;
-  queries: Map<number, Query>;
+  queryManager: QueryManager;
   version: number;
 
   constructor() {
     super();
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager(this);
+    this.queryManager = new QueryManager(this);
     this.systemManager = new SystemManager();
     this.version = 0;
 
-    // We return a new instance proxy to make sure we get the last version ( before removed )
     this.entityManager.on("create", (entityId: number) => {
       this.emit("entityCreated", {
         entityId,
@@ -58,8 +61,6 @@ export default class World extends EventRegistry<WorldEvents> {
       }
       this._updateQueries();
     });
-
-    this.queries = new Map();
   }
 
   getEntity(id: number): Entity | undefined {
@@ -71,23 +72,14 @@ export default class World extends EventRegistry<WorldEvents> {
   }
 
   query(config: QueryConfig): Query {
-    const hash: number = Query.getHash(config);
-    const existingQuery: Query | undefined = this.queries.get(hash);
-    let query = existingQuery;
-    if (!query) {
-      query = new Query(config, this);
-      this.queries.set(hash, query);
-      this._updateQueries();
-    }
+    const query = this.queryManager.createQuery(config);
+    this._updateQueries();
     return query;
   }
 
   private _updateQueries() {
     const entities = this.componentManager.dirtyEntities;
-    this.queries.forEach((query: Query) => {
-      query.markDirty();
-      query.checkEntities(entities.size > 0 ? entities : undefined);
-    });
+    this.queryManager.update(entities);
     this.componentManager.cleanDirtyEntities();
     this.version++;
   }

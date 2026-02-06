@@ -10,7 +10,18 @@ import {
   ComponentManager,
   type ComponentManagerEvents,
 } from "./core/managers/ComponentManager";
-import { Query, type QueryConfig, type QueryEvents } from "./core/Query";
+import {
+  QueryManager,
+  Query,
+  type QueryConfig,
+  type QueryEvents,
+  type QueryManagerEvents,
+} from "./core/managers/QueryManager";
+import {
+  PrefabManager,
+  type PrefabManagerEvents,
+  type Prefab,
+} from "./core/managers/PrefabManager";
 import { SparseSet } from "./core/helpers/SparseSet";
 import { Time, type TimeEvents } from "./core/helpers/Time";
 import World, { type WorldEvents } from "./core/World";
@@ -18,10 +29,13 @@ import World, { type WorldEvents } from "./core/World";
 export {
   type System,
   type Entity,
-  type EntityManagerEvents,
-  type ComponentManagerEvents,
-  type ComponentSchema,
+  type Prefab,
   type QueryConfig,
+  type ComponentSchema,
+  type EntityManagerEvents,
+  type PrefabManagerEvents,
+  type ComponentManagerEvents,
+  type QueryManagerEvents,
   type QueryEvents,
   type TimeEvents,
   type WorldEvents,
@@ -32,5 +46,7 @@ export {
   EventRegistry,
   SystemManager,
   EntityManager,
+  QueryManager,
+  PrefabManager,
   ComponentManager,
 };
