@@ -1,6 +1,6 @@
-import type { Entity } from "./EntityManager";
-import EventRegistry from "./EventRegistry";
-import { SparseSet } from "./SparseSet";
+import type { Entity } from "./managers/EntityManager";
+import EventRegistry from "./helpers/EventRegistry";
+import { SparseSet } from "./helpers/SparseSet";
 import type World from "./World";
 
 export interface QueryConfig {

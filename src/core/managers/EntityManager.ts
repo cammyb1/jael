@@ -1,6 +1,6 @@
-import EventRegistry from "./EventRegistry";
-import { SparseSet } from "./SparseSet";
-import type World from "./World";
+import EventRegistry from "../helpers/EventRegistry";
+import { SparseSet } from "../helpers/SparseSet";
+import type World from "../World";
 
 export class Entity {
   readonly id: number;

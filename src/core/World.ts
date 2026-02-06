@@ -1,9 +1,9 @@
-import { ComponentManager, type ComponentSchema } from "./ComponentManager";
-import { Entity, EntityManager } from "./EntityManager";
-import EventRegistry from "./EventRegistry";
+import { ComponentManager, type ComponentSchema } from "./managers/ComponentManager";
+import { Entity, EntityManager } from "./managers/EntityManager";
+import EventRegistry from "./helpers/EventRegistry";
 import { Query, type QueryConfig } from "./Query";
-import { SparseSet } from "./SparseSet";
-import { SystemManager, type System } from "./SystemManager";
+import { SparseSet } from "./helpers/SparseSet";
+import { SystemManager, type System } from "./managers/SystemManager";
 
 export interface WorldEvents {
   entityCreated: { entityId: number };

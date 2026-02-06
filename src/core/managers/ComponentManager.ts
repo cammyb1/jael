@@ -1,5 +1,5 @@
-import EventRegistry from "./EventRegistry";
-import type World from "./World";
+import EventRegistry from "../helpers/EventRegistry";
+import type World from "../World";
 
 export type ComponentSchema = Record<string, any>;
 
@@ -21,6 +21,16 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   clearComponentSchema(entityId: number) {
     if (!this.componentSet[entityId]) return;
     delete this.componentSet[entityId];
+  }
+
+  getComponentsSchema(entityId: number): ComponentSchema | undefined {
+    return this.componentSet[entityId];
+  }
+
+  setComponentsSchema(entityId: number, schema: ComponentSchema) {
+    if (!this.componentSet[entityId]) {
+      this.componentSet[entityId] = schema;
+    }
   }
 
   addComponent<K extends keyof ComponentSchema>(
