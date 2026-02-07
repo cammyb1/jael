@@ -10,13 +10,7 @@ import {
   ComponentManager,
   type ComponentManagerEvents,
 } from "./core/managers/ComponentManager";
-import {
-  QueryManager,
-  Query,
-  type QueryConfig,
-  type QueryEvents,
-  type QueryManagerEvents,
-} from "./core/Query";
+import { Query, type QueryConfig, type QueryEvents } from "./core/Query";
 import {
   PrefabManager,
   type PrefabManagerEvents,
@@ -35,7 +29,6 @@ export {
   type EntityManagerEvents,
   type PrefabManagerEvents,
   type ComponentManagerEvents,
-  type QueryManagerEvents,
   type QueryEvents,
   type TimeEvents,
   type WorldEvents,
@@ -46,7 +39,6 @@ export {
   EventRegistry,
   SystemManager,
   EntityManager,
-  QueryManager,
   PrefabManager,
   ComponentManager,
 };
