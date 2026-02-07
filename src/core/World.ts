@@ -24,7 +24,7 @@ export default class World extends EventRegistry<WorldEvents> {
   componentManager: ComponentManager;
   systemManager: SystemManager;
   prefabManager: PrefabManager;
-  _queries: Record<number, Query> = {};
+  _queries: Map<number, Query> = new Map();
 
   version: number;
 
@@ -86,11 +86,11 @@ export default class World extends EventRegistry<WorldEvents> {
 
   query(config: QueryConfig): Query {
     const hash = Query.getHash(config);
-    const existingQuery = this._queries[hash];
+    const existingQuery = this._queries.get(hash);
     let query = existingQuery;
     if (!query) {
       query = new Query(config, this);
-      this._queries[hash] = query;
+      this._queries.set(hash, query);
       this.emit("create", query);
       this._updateQueries();
     }
@@ -99,7 +99,7 @@ export default class World extends EventRegistry<WorldEvents> {
 
   private _updateQueries() {
     const entities: number[] = this.componentManager.dirtyEntities;
-    for (const query of Object.values(this._queries)) {
+    for (const [, query] of this._queries) {
       query.setDirty(true);
       query.checkEntities(entities.length > 0 ? entities : undefined);
     }
