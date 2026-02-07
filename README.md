@@ -20,6 +20,7 @@ _A modern, performant, and user-friendly Entity Component System library written
   - [Entity](#entity)
   - [System](#system)
   - [Query](#query)
+  - [Prefab](#prefab)
   - [SparseSet](#sparseset)
   - [Time](#time)
   - [EventRegistry](#event-registry)
@@ -302,6 +303,56 @@ query.on("added", (entityId: number) => {
 
 query.on("removed", (entityId: number) => {
   // Entity removed
+});
+```
+
+### Prefab
+
+Components schema template for easy multiple entities creation/instancing with primitive schemas
+
+```typescript
+const world = new World();
+
+const livingSchema = {
+  position: { x: 0, y: 0, z: 0 },
+  velocity: { x: 0, y: 0, z: 0 },
+  health: { current: 100, max: 100 },
+};
+
+// Create from schema
+const prefab = world.createPrefab("living", livingSchema);
+
+// Create from existing Entity
+const entityId = world.create();
+world.addComponent(entityId, "position", { x: 0, y: 0, z: 0 });
+world.addComponent(entityId, "velocity", { x: 0, y: 0, z: 0 });
+world.addComponent(entityId, "health", { current: 100, max: 100 });
+
+const prefab = world.createPrefab("living", entityId);
+
+// Instantiate existing prefab
+const entityId = world.instantiate("living"); // number | undefined;
+```
+
+### Extending Prefab Manager
+
+Current Prefab manager only supports array/primivite/planeObjets but can be extended.
+
+```typescript
+// Create detector function - (any) => string|null
+
+world.prefabManager.addDetector((compValue) => {
+  if (typeof compValue === "object" && compValue.isTest) return "test";
+  return null;
+});
+
+// Create cloner for new Detector function
+world.prefabManager.addCloner("test", (value: any) => value.clone());
+
+// This adds support for complex component values
+const prefab = world.createPrefab("test", {
+  name: "test",
+  testComp: { isTest: true, clone: (v) => ({ ...v }), ...rest },
 });
 ```
 
