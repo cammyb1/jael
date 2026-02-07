@@ -17,11 +17,11 @@ export interface PrefabManagerEvents {
 }
 
 export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
-  protected prefabs: Map<string, Prefab> = new Map();
+  protected prefabs: Record<string, Prefab> = {};
   private _world: World;
 
   private _detectors: DetectorType[] = [];
-  private _cloners: Map<string, CloneFunction> = new Map();
+  private _cloners: Record<string, CloneFunction> = {};
 
   private _nexPrefabId = 0;
 
@@ -43,7 +43,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
 
   addCloner(type: string, fn: CloneFunction) {
     if (this._cloners.has(type)) return;
-    this._cloners.set(type, fn);
+    this._cloners[type] = fn;
   }
 
   addDetector(detector: DetectorType) {
@@ -71,24 +71,24 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   }
 
   hasPrefab(name: string): boolean {
-    return this.prefabs.has(name);
+    return !!this.prefabs[name];
   }
 
   getPrefab(name: string): Prefab | undefined {
-    return this.prefabs.get(name);
+    return this.prefabs[name];
   }
 
   removePrefab(name: string) {
-    this.prefabs.delete(name);
+    delete this.prefabs[name];
   }
 
   createFromSchema(name: string, schema: ComponentSchema): Prefab {
-    const existingPrefab = this.prefabs.get(name);
+    const existingPrefab = this.prefabs[name];
     if (existingPrefab) return existingPrefab;
 
     const preSchema = this._cloneScheme(schema);
     const prefab: Prefab = { id: this._nexPrefabId, name, schema: preSchema };
-    this.prefabs.set(prefab.name, prefab);
+    this.prefabs[prefab.name] = prefab;
     this._nexPrefabId++;
 
     this.emit("created", { prefab: prefab.name });
@@ -96,7 +96,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   }
 
   createFromEntity(name: string, entityId: number): Prefab | undefined {
-    const existingPrefab = this.prefabs.get(name);
+    const existingPrefab = this.prefabs[name];
     if (existingPrefab) return existingPrefab;
 
     const schema: ComponentSchema | undefined =
@@ -106,7 +106,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   }
 
   instantiate(name: string): number | undefined {
-    const prefab: Prefab | undefined = this.prefabs.get(name);
+    const prefab: Prefab | undefined = this.prefabs[name];
     if (!prefab) return;
 
     const entityId = this._world.create();

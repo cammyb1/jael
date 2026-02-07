@@ -102,7 +102,7 @@ export class Query extends EventRegistry<QueryEvents> {
 }
 
 export class QueryManager extends EventRegistry<QueryManagerEvents> {
-  _queries: Map<number, Query> = new Map();
+  _queries: Record<number, Query> = {};
   _world: World;
 
   constructor(world: World) {
@@ -132,11 +132,11 @@ export class QueryManager extends EventRegistry<QueryManagerEvents> {
   }
 
   hasQuery(hash: number): boolean {
-    return this._queries.has(hash);
+    return !!this._queries[hash];
   }
 
   getQuery(hash: number): Query | undefined {
-    return this._queries.get(hash);
+    return this._queries[hash];
   }
 
   createQuery(config: QueryConfig): Query {
@@ -145,17 +145,17 @@ export class QueryManager extends EventRegistry<QueryManagerEvents> {
     let query = existingQuery;
     if (!query) {
       query = new Query(config, this._world);
-      this._queries.set(hash, query);
+      this._queries[hash] = query;
       this.emit("create", query);
     }
     return query;
   }
 
   update(entities: Set<number>) {
-    this._queries.forEach((query: Query) => {
+    for (const query of Object.values(this._queries)) {
       query.setDirty(true);
       query.checkEntities(entities.size > 0 ? entities : undefined);
-    });
+    }
     this.emit("update");
   }
 }

@@ -9,9 +9,9 @@ export interface ComponentManagerEvents {
 }
 
 export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
-  private componentSet: { [k: number]: ComponentSchema } = {};
+  private componentSet: Record<number, ComponentSchema> = {};
   private world: World;
-  public dirtyEntities: Set<number> = new Set();
+  public dirtyEntities: number[] = [];
 
   constructor(world: World) {
     super();
@@ -46,7 +46,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
       schema[key] = value;
     }
 
-    this.dirtyEntities.add(entityId);
+    this.dirtyEntities.push(entityId);
     this.emit("add", { entityId, component: key });
   }
 
@@ -59,7 +59,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   }
 
   cleanDirtyEntities() {
-    this.dirtyEntities.clear();
+    this.dirtyEntities = [];
   }
 
   hasComponent<K extends keyof ComponentSchema>(
@@ -82,7 +82,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
         delete this.componentSet[entityId];
       }
 
-      this.dirtyEntities.add(entityId);
+      this.dirtyEntities.push(entityId);
       this.emit("remove", { entityId, component: key });
     }
   }
