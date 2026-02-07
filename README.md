@@ -12,14 +12,11 @@ _A modern, performant, and user-friendly Entity Component System library written
 
 ## Table of contents
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Architecture](#architecture)
-- [Api Reference](#-api-reference)
+- [Api Reference](#api-reference)
   - [World](#world)
   - [Entity](#entity)
-  - [System](#system)
   - [Query](#query)
+  - [System](#system)
   - [Prefab](#prefab)
   - [SparseSet](#sparseset)
   - [Time](#time)
@@ -35,7 +32,7 @@ _A modern, performant, and user-friendly Entity Component System library written
 - **User Friendly API** - Clean, fluent api that's easy to learn
 - **High Performance** - Optimized SparseSet implementation for fast entity lookups
 - **Query System** - Optimized cache query system for entity packets
-- **Minimal Bundle size** - Compact bundle size without dependencies.(38kb 📦)
+- **Minimal Bundle size** - Compact bundle size without dependencies.(39kb 📦)
 
 ## Installation
 
@@ -173,6 +170,14 @@ world.on("componentRemoved", ({ entityId, component }) => {
   console.log(`Component ${component} removed from entity ${entityId}`);
 });
 
+world.on("prefabCreated", ({ prefab }) => {
+  console.log(`Prefab ${prefab} has been created.`);
+});
+
+world.on("prefabInstantiated", ({ prefab; entityId }) => {
+  console.log(`Prefab ${prefab} instantiated whitin world with id ${entityId}`);
+});
+
 world.on("updated", () => {
   console.log("World updated");
 });
@@ -202,6 +207,35 @@ const compSchema = entity.get("position");
 entity.id; // Returns unique entity id from proxy
 ```
 
+### Prefab
+
+Components schema template for easy multiple entities creation/instancing with primitive schemas
+
+```typescript
+const world = new World();
+
+const livingSchema = {
+  damage: 20,
+  position: { x: 0, y: 0, z: 0 },
+  velocity: { x: 0, y: 0, z: 0 },
+  health: { current: 100, max: 100 },
+};
+
+// Create from schema
+const prefab = world.createPrefab("living", livingSchema);
+
+// Create from existing Entity
+const entityId = world.create();
+world.addComponent(entityId, "position", { x: 0, y: 0, z: 0 });
+world.addComponent(entityId, "velocity", { x: 0, y: 0, z: 0 });
+world.addComponent(entityId, "health", { current: 100, max: 100 });
+
+const prefab = world.createPrefab("living", entityId);
+
+// Instantiate existing prefab
+const entityId = world.instantiate("living"); // number | undefined;
+```
+
 ### System
 
 Systems contain the game logic that processes entities with specific components.
@@ -209,7 +243,6 @@ Systems contain the game logic that processes entities with specific components.
 ```typescript
 interface System {
   priority: number; // Execution order (lower = earlier)
-  init?(): void; // Runs when added to the world
   exit?(): void; // Cleanup when removed
   update(): void; // Main update logic
 }
@@ -221,10 +254,6 @@ interface System {
 const renderSystem: System = {
   priority: 100, // Render after all other systems
 
-  init(){
-    console.log('This runs first')
-  }
-
   update(dt) {
     const renderableQuery = world.include("position", "sprite");
 
@@ -234,7 +263,7 @@ const renderSystem: System = {
 
       // Render entity
       drawSprite(sprite, position.x, position.y);
-    })
+    });
   },
 
   exit() {
@@ -303,56 +332,6 @@ query.on("added", (entityId: number) => {
 
 query.on("removed", (entityId: number) => {
   // Entity removed
-});
-```
-
-### Prefab
-
-Components schema template for easy multiple entities creation/instancing with primitive schemas
-
-```typescript
-const world = new World();
-
-const livingSchema = {
-  position: { x: 0, y: 0, z: 0 },
-  velocity: { x: 0, y: 0, z: 0 },
-  health: { current: 100, max: 100 },
-};
-
-// Create from schema
-const prefab = world.createPrefab("living", livingSchema);
-
-// Create from existing Entity
-const entityId = world.create();
-world.addComponent(entityId, "position", { x: 0, y: 0, z: 0 });
-world.addComponent(entityId, "velocity", { x: 0, y: 0, z: 0 });
-world.addComponent(entityId, "health", { current: 100, max: 100 });
-
-const prefab = world.createPrefab("living", entityId);
-
-// Instantiate existing prefab
-const entityId = world.instantiate("living"); // number | undefined;
-```
-
-### Extending Prefab Manager
-
-Current Prefab manager only supports array/primivite/planeObjets but can be extended.
-
-```typescript
-// Create detector function - (any) => string|null
-
-world.prefabManager.addDetector((compValue) => {
-  if (typeof compValue === "object" && compValue.isTest) return "test";
-  return null;
-});
-
-// Create cloner for new Detector function
-world.prefabManager.addCloner("test", (value: any) => value.clone());
-
-// This adds support for complex component values
-const prefab = world.createPrefab("test", {
-  name: "test",
-  testComp: { isTest: true, clone: (v) => ({ ...v }), ...rest },
 });
 ```
 
@@ -496,18 +475,30 @@ class MovementSystem implements System {
   }
 }
 
+world.addSystem(new MovementSystem());
+
+// System as function
+function MovementSystem(world: World): System {
+  const  movementQuery = world.include('position', 'velocity');
+  return {
+    priority: 1,
+    update(){
+      this.movementQuery.entities.forEach((entity) => {
+      // Handle entity movement
+      })
+    }
+  }
+}
+
+world.addSystem(MovementSystem(world))
+
 // ✅ Also good: extend System for js Object:
 
 type MovementSystem = { movementQuery: Query | null } & System;
 
 const movementSystem: MovementSystem = {
-  movementQuery: null;
+  movementQuery: world.include("position", "velocity");
   priority: 1;
-
-  init(){
-    this.movementQuery = world.include('position', 'velocity');
-  }
-
   update(){
     this.movementQuery?.entities.forEach((entity) => {
       // Handle entity movement
@@ -526,7 +517,10 @@ update() {
 
 ```typescript
 // Remember to clean up when removing entities
-world.destroy(entityId); // Automatically removes all components
+world.destroy(entityId); // Automatically removes all components and query pointer
+world.removeComponent(entityId, compKey) // Removes comp from entity
+world.removeSystem(system) // Remove system and calls exit function
+world.removePrefab(prefabName) // Remove prefab if exist
 
 // Clean up systems if they have resources
 system.exit?.(); // Called automatically when removed from world
@@ -554,10 +548,33 @@ world.on("playerScored", ({ points }) => {
 });
 ```
 
+### Extending Prefab Manager
+
+Current Prefab manager only supports array/primivite/planeObjets but can be extended.
+
+```typescript
+// Create detector function - (any) => string|null
+
+world.prefabManager.addDetector((compValue) => {
+  if (typeof compValue === "object" && compValue.isTest) return "test";
+  return null;
+});
+
+// Create cloner for new Detector function
+world.prefabManager.addCloner("test", (value: any) => value.clone());
+
+// This adds support for complex component values
+const prefab = world.createPrefab("test", {
+  name: "test",
+  testComp: { isTest: true, clone: (v) => ({ ...v }), ...rest },
+});
+```
+
 ## Planned Features
 
+- ~~Instancing / Prefab system.~~
+- Serialization for raw export
 - Implement basic one level tag manager.
-- Instancing / Prefab system with searilzation.
 - Entity with childrens and parents.
 - React wrapper (?)
 
@@ -582,10 +599,6 @@ npm run dev
 npm run build
 ```
 
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/) - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
 - Inspiration from ECS frameworks like [ECSY](https://github.com/ecsyjs/ecsy) and [Bevy](https://github.com/bevyengine/bevy)
@@ -593,6 +606,10 @@ npm run build
 - TypeScript for providing excellent type safety and developer experience
 
 ---
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/) - see the [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
