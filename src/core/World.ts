@@ -7,12 +7,15 @@ import EventRegistry from "./helpers/EventRegistry";
 import { QueryManager, Query, type QueryConfig } from "./managers/QueryManager";
 import { SparseSet } from "./helpers/SparseSet";
 import { SystemManager, type System } from "./managers/SystemManager";
+import { PrefabManager, type Prefab } from "./managers/PrefabManager";
 
 export interface WorldEvents {
   entityCreated: { entityId: number };
   entityDestroyed: { entityId: number };
   componentAdded: { entityId: number; component: keyof ComponentSchema };
   componentRemoved: { entityId: number; component: keyof ComponentSchema };
+  prefabCreated: { prefab: string };
+  prefabInstantiated: { prefab: string; entityId: number };
   updated: void;
 }
 
@@ -21,6 +24,8 @@ export default class World extends EventRegistry<WorldEvents> {
   componentManager: ComponentManager;
   systemManager: SystemManager;
   queryManager: QueryManager;
+  prefabManager: PrefabManager;
+
   version: number;
 
   constructor() {
@@ -28,6 +33,8 @@ export default class World extends EventRegistry<WorldEvents> {
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager(this);
     this.queryManager = new QueryManager(this);
+    this.prefabManager = new PrefabManager(this);
+
     this.systemManager = new SystemManager();
     this.version = 0;
 
@@ -61,6 +68,13 @@ export default class World extends EventRegistry<WorldEvents> {
       }
       this._updateQueries();
     });
+
+    this.prefabManager.on("created", (event) =>
+      this.emit("prefabCreated", event),
+    );
+    this.prefabManager.on("instantiated", (event) =>
+      this.emit("prefabInstantiated", event),
+    );
   }
 
   getEntity(id: number): Entity | undefined {
@@ -98,6 +112,27 @@ export default class World extends EventRegistry<WorldEvents> {
 
   create(): number {
     return this.entityManager.create();
+  }
+
+  createPrefab(
+    name: string,
+    arg: ComponentSchema | number,
+  ): Prefab | undefined {
+    return typeof arg === "number"
+      ? this.prefabManager.createFromEntity(name, arg)
+      : this.prefabManager.createFromSchema(name, arg);
+  }
+
+  getPrefab(name: string): Prefab | undefined {
+    return this.prefabManager.getPrefab(name);
+  }
+
+  removePrefab(name: string) {
+    this.prefabManager.removePrefab(name);
+  }
+
+  instantiate(name: string): number | undefined {
+    return this.prefabManager.instantiate(name);
   }
 
   destroy(entityId: number) {
