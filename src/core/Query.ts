@@ -79,7 +79,7 @@ export class Query extends EventRegistry<QueryEvents> {
     return this._dirty;
   }
 
-  checkEntities(entities?: Set<number>) {
+  checkEntities(entities?: number[]) {
     if (!this.isDirty() || this._world.version === this._lastVersion) return;
 
     const checkedEntities = entities || this._world.entityIds;

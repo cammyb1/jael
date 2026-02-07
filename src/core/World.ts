@@ -98,10 +98,10 @@ export default class World extends EventRegistry<WorldEvents> {
   }
 
   private _updateQueries() {
-    const entities = new Set(this.componentManager.dirtyEntities);
+    const entities: number[] = this.componentManager.dirtyEntities;
     for (const query of Object.values(this._queries)) {
       query.setDirty(true);
-      query.checkEntities(entities.size > 0 ? entities : undefined);
+      query.checkEntities(entities.length > 0 ? entities : undefined);
     }
     this.componentManager.cleanDirtyEntities();
     this.version++;

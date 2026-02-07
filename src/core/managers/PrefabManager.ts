@@ -63,7 +63,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
         }
       }
 
-      const cloner = this._cloners.get(type || "primitive");
+      const cloner = this._cloners[type || "primitive"];
       cloned[key] = cloner ? cloner(value) : value;
     }
 
