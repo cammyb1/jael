@@ -1,6 +1,7 @@
 import type { Entity } from "./EntityManager";
 import EventRegistry from "../helpers/EventRegistry";
 import type World from "../World";
+import { SparseSet } from "../helpers/SparseSet";
 
 export interface QueryConfig {
   include: string[];
@@ -21,7 +22,7 @@ export class Query extends EventRegistry<QueryEvents> {
   private _config: QueryConfig;
   private _world: World;
   private _lastVersion: number = 0;
-  private _entityMap: Set<number> = new Set();
+  private _entityMap: SparseSet<number> = new SparseSet();
   private _dirty: boolean;
 
   constructor(config: QueryConfig, world: World) {
@@ -33,7 +34,7 @@ export class Query extends EventRegistry<QueryEvents> {
     this._world.on("entityDestroyed", ({ entityId }) => {
       if (this._entityMap.has(entityId)) {
         this.emit("removed", entityId);
-        this._entityMap.delete(entityId);
+        this._entityMap.remove(entityId);
       }
     });
   }
@@ -51,10 +52,10 @@ export class Query extends EventRegistry<QueryEvents> {
   }
 
   size(): number {
-    return this.ids.size;
+    return this._entityMap.size();
   }
 
-  get ids(): Set<number> {
+  get ids(): SparseSet<number> {
     return this._entityMap;
   }
 
