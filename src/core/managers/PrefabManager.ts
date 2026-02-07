@@ -42,7 +42,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   }
 
   addCloner(type: string, fn: CloneFunction) {
-    if (this._cloners.has(type)) return;
+    if (this._cloners[type]) return;
     this._cloners[type] = fn;
   }
 

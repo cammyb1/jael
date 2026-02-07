@@ -1,7 +1,7 @@
-import type { Entity } from "./EntityManager";
-import EventRegistry from "../helpers/EventRegistry";
-import type World from "../World";
-import { SparseSet } from "../helpers/SparseSet";
+import type { Entity } from "./managers/EntityManager";
+import EventRegistry from "./helpers/EventRegistry";
+import type World from "./World";
+import { SparseSet } from "./helpers/SparseSet";
 
 export interface QueryConfig {
   include: string[];
@@ -11,11 +11,6 @@ export interface QueryConfig {
 export interface QueryEvents {
   added: number;
   removed: number;
-}
-
-export interface QueryManagerEvents {
-  update: void;
-  create: Query;
 }
 
 export class Query extends EventRegistry<QueryEvents> {
@@ -99,16 +94,6 @@ export class Query extends EventRegistry<QueryEvents> {
     this.setDirty(false);
     this._lastVersion = this._world.version;
   }
-}
-
-export class QueryManager extends EventRegistry<QueryManagerEvents> {
-  _queries: Record<number, Query> = {};
-  _world: World;
-
-  constructor(world: World) {
-    super();
-    this._world = world;
-  }
 
   static getHash(config: QueryConfig): number {
     const inString = config.include
@@ -129,33 +114,5 @@ export class QueryManager extends EventRegistry<QueryManagerEvents> {
       hash |= 0; // Constrain to 32bit integer
     }
     return hash;
-  }
-
-  hasQuery(hash: number): boolean {
-    return !!this._queries[hash];
-  }
-
-  getQuery(hash: number): Query | undefined {
-    return this._queries[hash];
-  }
-
-  createQuery(config: QueryConfig): Query {
-    const hash = QueryManager.getHash(config);
-    const existingQuery = this.getQuery(hash);
-    let query = existingQuery;
-    if (!query) {
-      query = new Query(config, this._world);
-      this._queries[hash] = query;
-      this.emit("create", query);
-    }
-    return query;
-  }
-
-  update(entities: Set<number>) {
-    for (const query of Object.values(this._queries)) {
-      query.setDirty(true);
-      query.checkEntities(entities.size > 0 ? entities : undefined);
-    }
-    this.emit("update");
   }
 }

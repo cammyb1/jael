@@ -16,7 +16,7 @@ import {
   type QueryConfig,
   type QueryEvents,
   type QueryManagerEvents,
-} from "./core/managers/QueryManager";
+} from "./core/Query";
 import {
   PrefabManager,
   type PrefabManagerEvents,

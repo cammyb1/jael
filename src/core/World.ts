@@ -4,7 +4,7 @@ import {
 } from "./managers/ComponentManager";
 import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
-import { QueryManager, Query, type QueryConfig } from "./managers/QueryManager";
+import { Query, type QueryConfig } from "./Query";
 import { SparseSet } from "./helpers/SparseSet";
 import { SystemManager, type System } from "./managers/SystemManager";
 import { PrefabManager, type Prefab } from "./managers/PrefabManager";
@@ -23,8 +23,8 @@ export default class World extends EventRegistry<WorldEvents> {
   entityManager: EntityManager;
   componentManager: ComponentManager;
   systemManager: SystemManager;
-  queryManager: QueryManager;
   prefabManager: PrefabManager;
+  _queries: Record<number, Query> = {};
 
   version: number;
 
@@ -32,7 +32,6 @@ export default class World extends EventRegistry<WorldEvents> {
     super();
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager(this);
-    this.queryManager = new QueryManager(this);
     this.prefabManager = new PrefabManager(this);
 
     this.systemManager = new SystemManager();
@@ -86,14 +85,24 @@ export default class World extends EventRegistry<WorldEvents> {
   }
 
   query(config: QueryConfig): Query {
-    const query = this.queryManager.createQuery(config);
-    this._updateQueries();
+    const hash = Query.getHash(config);
+    const existingQuery = this._queries[hash];
+    let query = existingQuery;
+    if (!query) {
+      query = new Query(config, this);
+      this._queries[hash] = query;
+      this.emit("create", query);
+      this._updateQueries();
+    }
     return query;
   }
 
   private _updateQueries() {
-    const entities = this.componentManager.dirtyEntities;
-    this.queryManager.update(entities);
+    const entities = new Set(this.componentManager.dirtyEntities);
+    for (const query of Object.values(this._queries)) {
+      query.setDirty(true);
+      query.checkEntities(entities.size > 0 ? entities : undefined);
+    }
     this.componentManager.cleanDirtyEntities();
     this.version++;
   }
