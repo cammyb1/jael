@@ -7,6 +7,7 @@ import {
 } from "./core/managers/EntityManager";
 import {
   type ComponentSchema,
+  type ComponentKey,
   ComponentManager,
   type ComponentManagerEvents,
 } from "./core/managers/ComponentManager";
@@ -26,6 +27,7 @@ export {
   type Prefab,
   type QueryConfig,
   type ComponentSchema,
+  type ComponentKey,
   type EntityManagerEvents,
   type PrefabManagerEvents,
   type ComponentManagerEvents,

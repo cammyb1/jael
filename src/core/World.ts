@@ -1,10 +1,11 @@
 import {
   ComponentManager,
+  type ComponentKey,
   type ComponentSchema,
 } from "./managers/ComponentManager";
 import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
-import { Query, type QueryConfig } from "./Query";
+import { Query, QueryHashCache, type QueryConfig } from "./Query";
 import { SparseSet } from "./helpers/SparseSet";
 import { SystemManager, type System } from "./managers/SystemManager";
 import { PrefabManager, type Prefab } from "./managers/PrefabManager";
@@ -12,8 +13,8 @@ import { PrefabManager, type Prefab } from "./managers/PrefabManager";
 export interface WorldEvents {
   entityCreated: { entityId: number };
   entityDestroyed: { entityId: number };
-  componentAdded: { entityId: number; component: keyof ComponentSchema };
-  componentRemoved: { entityId: number; component: keyof ComponentSchema };
+  componentAdded: { entityId: number; component: ComponentKey };
+  componentRemoved: { entityId: number; component: ComponentKey };
   prefabCreated: { prefab: string };
   prefabInstantiated: { prefab: string; entityId: number };
   updated: void;
@@ -85,7 +86,7 @@ export default class World extends EventRegistry<WorldEvents> {
   }
 
   query(config: QueryConfig): Query {
-    const hash = Query.getHash(config);
+    const hash = QueryHashCache.generate(config);
     const existingQuery = this._queries.get(hash);
     let query = existingQuery;
     if (!query) {
@@ -156,15 +157,15 @@ export default class World extends EventRegistry<WorldEvents> {
     this.systemManager.removeSystem(sys);
   }
 
-  addComponent(entityId: number, compKey: string, compValue: any) {
+  addComponent(entityId: number, compKey: ComponentKey, compValue: any) {
     this.componentManager.addComponent(entityId, compKey, compValue);
   }
 
-  getComponent<T>(entityId: number, compKey: string): T {
+  getComponent<T>(entityId: number, compKey: ComponentKey): T {
     return this.componentManager.getComponent(entityId, compKey);
   }
 
-  removeComponent(entityId: number, compKey: string) {
+  removeComponent(entityId: number, compKey: ComponentKey) {
     this.componentManager.removeComponent(entityId, compKey);
   }
 

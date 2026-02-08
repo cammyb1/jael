@@ -518,9 +518,9 @@ update() {
 ```typescript
 // Remember to clean up when removing entities
 world.destroy(entityId); // Automatically removes all components and query pointer
-world.removeComponent(entityId, compKey) // Removes comp from entity
-world.removeSystem(system) // Remove system and calls exit function
-world.removePrefab(prefabName) // Remove prefab if exist
+world.removeComponent(entityId, compKey); // Removes comp from entity
+world.removeSystem(system); // Remove system and calls exit function
+world.removePrefab(prefabName); // Remove prefab if exist
 
 // Clean up systems if they have resources
 system.exit?.(); // Called automatically when removed from world
@@ -573,6 +573,7 @@ const prefab = world.createPrefab("test", {
 ## Planned Features
 
 - ~~Instancing / Prefab system.~~
+- Prefab updated scheme updates instances
 - Serialization for raw export
 - Implement basic one level tag manager.
 - Entity with childrens and parents.

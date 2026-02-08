@@ -86,8 +86,11 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     const existingPrefab = this.prefabs[name];
     if (existingPrefab) return existingPrefab;
 
-    const preSchema = this._cloneScheme(schema);
-    const prefab: Prefab = { id: this._nexPrefabId, name, schema: preSchema };
+    const prefab: Prefab = {
+      id: this._nexPrefabId,
+      name,
+      schema: this._cloneScheme(schema),
+    };
     this.prefabs[prefab.name] = prefab;
     this._nexPrefabId++;
 
@@ -99,8 +102,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     const existingPrefab = this.prefabs[name];
     if (existingPrefab) return existingPrefab;
 
-    const schema: ComponentSchema | undefined =
-      this._world.componentManager.getComponentsSchema(entityId);
+    const schema = this._world.componentManager.getComponentsSchema(entityId);
     if (!schema) return;
     return this.createFromSchema(name, schema);
   }
@@ -110,7 +112,8 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     if (!prefab) return;
 
     const entityId = this._world.create();
-    this._world.componentManager.setComponentsSchema(entityId, prefab.schema);
+    const preSchema = this._cloneScheme(prefab.schema);
+    this._world.componentManager.setComponentsSchema(entityId, preSchema);
     this.emit("instantiated", { prefab: prefab.name, entityId });
 
     return entityId;

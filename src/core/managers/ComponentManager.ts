@@ -1,11 +1,12 @@
 import EventRegistry from "../helpers/EventRegistry";
 import type World from "../World";
 
-export type ComponentSchema = Record<string, any>;
+export type ComponentKey = string;
+export type ComponentSchema = Record<ComponentKey, any>;
 
 export interface ComponentManagerEvents {
-  add: { entityId: number; component: keyof ComponentSchema };
-  remove: { entityId: number; component: keyof ComponentSchema };
+  add: { entityId: number; component: ComponentKey };
+  remove: { entityId: number; component: ComponentKey };
 }
 
 export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
@@ -33,10 +34,10 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     }
   }
 
-  addComponent<K extends keyof ComponentSchema>(
+  addComponent(
     entityId: number,
-    key: K,
-    value: ComponentSchema[K],
+    key: ComponentKey,
+    value: ComponentSchema[ComponentKey],
   ) {
     if (!this.world.exist(entityId)) return;
     const schema: ComponentSchema | undefined = this.componentSet[entityId];
@@ -50,10 +51,10 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     this.emit("add", { entityId, component: key });
   }
 
-  getComponent<K extends keyof ComponentSchema>(
+  getComponent(
     entityId: number,
-    key: K,
-  ): ComponentSchema[K] | undefined {
+    key: ComponentKey,
+  ): ComponentSchema[ComponentKey] | undefined {
     if (!this.hasComponent(entityId, key)) return;
     return this.componentSet[entityId][key];
   }
@@ -62,16 +63,13 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     this.dirtyEntities = [];
   }
 
-  hasComponent<K extends keyof ComponentSchema>(
-    entityId: number,
-    key: K,
-  ): boolean {
+  hasComponent(entityId: number, key: ComponentKey): boolean {
     const schema = this.componentSet[entityId];
     if (!schema) return false;
     return key in schema;
   }
 
-  removeComponent<K extends keyof ComponentSchema>(entityId: number, key: K) {
+  removeComponent(entityId: number, key: ComponentKey) {
     if (!this.componentSet[entityId]) return;
 
     const schema = this.componentSet[entityId];
