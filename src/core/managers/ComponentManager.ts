@@ -1,17 +1,18 @@
-import EventRegistry from "./EventRegistry";
-import type World from "./World";
+import EventRegistry from "../helpers/EventRegistry";
+import type World from "../World";
 
-export type ComponentSchema = Record<string, any>;
+export type ComponentKey = string;
+export type ComponentSchema = Record<ComponentKey, any>;
 
 export interface ComponentManagerEvents {
-  add: { entityId: number; component: keyof ComponentSchema };
-  remove: { entityId: number; component: keyof ComponentSchema };
+  add: { entityId: number; component: ComponentKey };
+  remove: { entityId: number; component: ComponentKey };
 }
 
 export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
-  private componentSet: { [k: number]: ComponentSchema } = {};
+  private componentSet: Record<number, ComponentSchema> = {};
   private world: World;
-  public dirtyEntities: Set<number> = new Set();
+  public dirtyEntities: number[] = [];
 
   constructor(world: World) {
     super();
@@ -23,10 +24,20 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     delete this.componentSet[entityId];
   }
 
-  addComponent<K extends keyof ComponentSchema>(
+  getComponentsSchema(entityId: number): ComponentSchema | undefined {
+    return this.componentSet[entityId];
+  }
+
+  setComponentsSchema(entityId: number, schema: ComponentSchema) {
+    if (!this.componentSet[entityId]) {
+      this.componentSet[entityId] = schema;
+    }
+  }
+
+  addComponent(
     entityId: number,
-    key: K,
-    value: ComponentSchema[K],
+    key: ComponentKey,
+    value: ComponentSchema[ComponentKey],
   ) {
     if (!this.world.exist(entityId)) return;
     const schema: ComponentSchema | undefined = this.componentSet[entityId];
@@ -36,32 +47,29 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
       schema[key] = value;
     }
 
-    this.dirtyEntities.add(entityId);
+    this.dirtyEntities.push(entityId);
     this.emit("add", { entityId, component: key });
   }
 
-  getComponent<K extends keyof ComponentSchema>(
+  getComponent(
     entityId: number,
-    key: K,
-  ): ComponentSchema[K] | undefined {
+    key: ComponentKey,
+  ): ComponentSchema[ComponentKey] | undefined {
     if (!this.hasComponent(entityId, key)) return;
     return this.componentSet[entityId][key];
   }
 
   cleanDirtyEntities() {
-    this.dirtyEntities.clear();
+    this.dirtyEntities = [];
   }
 
-  hasComponent<K extends keyof ComponentSchema>(
-    entityId: number,
-    key: K,
-  ): boolean {
+  hasComponent(entityId: number, key: ComponentKey): boolean {
     const schema = this.componentSet[entityId];
     if (!schema) return false;
     return key in schema;
   }
 
-  removeComponent<K extends keyof ComponentSchema>(entityId: number, key: K) {
+  removeComponent(entityId: number, key: ComponentKey) {
     if (!this.componentSet[entityId]) return;
 
     const schema = this.componentSet[entityId];
@@ -72,7 +80,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
         delete this.componentSet[entityId];
       }
 
-      this.dirtyEntities.add(entityId);
+      this.dirtyEntities.push(entityId);
       this.emit("remove", { entityId, component: key });
     }
   }

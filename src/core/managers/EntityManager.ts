@@ -1,6 +1,7 @@
-import EventRegistry from "./EventRegistry";
-import { SparseSet } from "./SparseSet";
-import type World from "./World";
+import EventRegistry from "../helpers/EventRegistry";
+import { SparseSet } from "../helpers/SparseSet";
+import type World from "../World";
+import type { ComponentKey } from "./ComponentManager";
 
 export class Entity {
   readonly id: number;
@@ -16,7 +17,7 @@ export class Entity {
    * @param compType Component name
    * @param compValue Component value
    */
-  add(compType: string, compValue: any) {
+  add(compType: ComponentKey, compValue: any) {
     this._world.addComponent(this.id, compType, compValue);
   }
 
@@ -24,7 +25,7 @@ export class Entity {
    * Remove component of current entity.
    * @param compType Component name
    */
-  remove(compType: string) {
+  remove(compType: ComponentKey) {
     this._world.removeComponent(this.id, compType);
   }
 
@@ -33,7 +34,7 @@ export class Entity {
    * @param compType Component name
    * @returns boolean
    */
-  has(compKey: string): boolean {
+  has(compKey: ComponentKey): boolean {
     return this._world.componentManager.hasComponent(this.id, compKey);
   }
 
@@ -42,7 +43,7 @@ export class Entity {
    * @param compType Component name
    * @returns Return component schema with T(any as default) as type
    */
-  get<T = any>(compType: string): T {
+  get<T = any>(compType: ComponentKey): T {
     return this._world.componentManager.getComponent(this.id, compType);
   }
 }
