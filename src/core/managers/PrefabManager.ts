@@ -21,6 +21,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   private _world: World;
 
   private _detectors: DetectorType[] = [];
+  private _typeCache: WeakMap<any, string | null> = new WeakMap();
   private _cloners: Record<string, CloneFunction> = {};
 
   private _nexPrefabId = 0;
@@ -29,9 +30,9 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     super();
     this._world = world;
 
-    this.addCloner("array", (v) => [...v]);
+    this.addCloner("array", (v: any[]) => v.slice());
     this.addCloner("primitive", (v) => v);
-    this.addCloner("plainObject", (v) => ({ ...v }));
+    this.addCloner("plainObject", (v) => Object.assign({}, v));
 
     this.addDetector((value) => {
       if (Array.isArray(value)) return "array";
@@ -51,19 +52,26 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     this._detectors.push(detector);
   }
 
+  private _getSchemaAttrType(value: any): string {
+    let type = this._typeCache.get(value);
+    if (type !== undefined) {
+      for (let detector of this._detectors) {
+        type = detector(value);
+        if (type) {
+          this._typeCache.set(value, type);
+          return type;
+        }
+      }
+    }
+    return "primitive";
+  }
+
   private _cloneScheme(scheme: ComponentSchema): ComponentSchema {
     const cloned: ComponentSchema = {};
 
     for (let [key, value] of Object.entries(scheme)) {
-      let type;
-      for (let detector of this._detectors) {
-        type = detector(value);
-        if (type) {
-          break;
-        }
-      }
-
-      const cloner = this._cloners[type || "primitive"];
+      const type = this._getSchemaAttrType(value);
+      const cloner = this._cloners[type];
       cloned[key] = cloner ? cloner(value) : value;
     }
 
@@ -112,8 +120,10 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     if (!prefab) return;
 
     const entityId = this._world.create();
-    const preSchema = this._cloneScheme(prefab.schema);
-    this._world.componentManager.setComponentsSchema(entityId, preSchema);
+    this._world.componentManager.setComponentsSchema(
+      entityId,
+      this._cloneScheme(prefab.schema),
+    );
     this.emit("instantiated", { prefab: prefab.name, entityId });
 
     return entityId;
