@@ -54,7 +54,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
 
   private _getSchemaAttrType(value: any): string {
     let type = this._typeCache.get(value);
-    if (type !== undefined) {
+    if (type === undefined) {
       for (let detector of this._detectors) {
         type = detector(value);
         if (type) {
