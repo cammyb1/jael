@@ -2,9 +2,10 @@
 
 # Jael (Just Another ECS Library)
 
-[![npm version](https://badge.fury.io/js/@jael-ecs%2Fcore.svg)](https://badge.fury.io/js/@jael-ecs%2Fcore)
+[![npm version](https://img.shields.io/npm/v/%40jael-ecs%2Fcore)](https://www.npmjs.com/package/@jael-ecs/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
+![Bundle size](https://img.shields.io/npm/unpacked-size/%40jael-ecs%2Fcore)
 
 _A modern, performant, and user-friendly Entity Component System library written in TypeScript_
 
@@ -32,7 +33,7 @@ _A modern, performant, and user-friendly Entity Component System library written
 - **User Friendly API** - Clean, fluent api that's easy to learn
 - **High Performance** - Optimized SparseSet implementation for fast entity lookups
 - **Query System** - Optimized cache query system for entity packets
-- **Minimal Bundle size** - Compact bundle size without dependencies.(39kb 📦)
+- **Minimal Bundle size** - Compact bundle size without dependencies.(48kb 📦)
 
 ## Installation
 
