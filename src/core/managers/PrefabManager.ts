@@ -21,7 +21,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   private _world: World;
 
   private _detectors: DetectorType[] = [];
-  private _typeCache: WeakMap<any, string | null> = new WeakMap();
+  private _typeCache: Map<string, string | null> = new Map();
   private _cloners: Record<string, CloneFunction> = {};
 
   private _nexPrefabId = 0;
@@ -53,17 +53,21 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   }
 
   private _getSchemaAttrType(value: any): string {
-    let type = this._typeCache.get(value);
-    if (type === undefined) {
+    const constructor = value.constructor.name;
+    let type = this._typeCache.get(constructor);
+
+    if (!type) {
       for (let detector of this._detectors) {
         type = detector(value);
         if (type) {
-          this._typeCache.set(value, type);
+          this._typeCache.set(constructor, type);
           return type;
         }
       }
+      this._typeCache.set(constructor, "primitive");
     }
-    return "primitive";
+
+    return type || "primitive";
   }
 
   private _cloneScheme(scheme: ComponentSchema): ComponentSchema {
