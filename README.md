@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/%40jael-ecs%2Fcore)](https://www.npmjs.com/package/@jael-ecs/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
-![Bundle size](https://img.shields.io/npm/unpacked-size/%40jael-ecs%2Fcore)
+[![Bundle size](https://img.shields.io/npm/unpacked-size/%40jael-ecs%2Fcore)]()
 
 _A modern, performant, and user-friendly Entity Component System library written in TypeScript_
 
