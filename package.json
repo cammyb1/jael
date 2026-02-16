@@ -28,6 +28,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "watch": "tsc && vite build --mode development --watch",
     "preview": "vite preview"
   },
   "devDependencies": {
