@@ -7,7 +7,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
-  console.log(mode);
   return {
     build: {
       target: "esnext",
