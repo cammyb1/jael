@@ -117,6 +117,9 @@ export class Query extends EventRegistry<QueryEvents> {
       if (this.hasComponents(entityId)) {
         this._entityMap.add(entityId);
         this.emit("added", entityId);
+      } else if (this._entityMap.has(entityId)) {
+        this._entityMap.remove(entityId);
+        this.emit("removed", entityId);
       }
     }
 
