@@ -64,18 +64,18 @@ interface Velocity {
 
 // Create entities
 const playerId = world.create();
-world.addComponent<Position>(playerId, "position", { x: 0, y: 0 });
-world.addComponent<Velocity>(playerId, "velocity", { dx: 1, dy: 1 });
+world.addComponent(playerId, "position", { x: 0, y: 0 });
+world.addComponent(playerId, "velocity", { dx: 1, dy: 1 });
 
 const enemyId = world.create();
-world.addComponent<Position>(enemyId, "position", { x: 10, y: 10 });
-world.addComponent<Velocity>(enemyId, "velocity", { dx: -1, dy: 0 });
+world.addComponent(enemyId, "position", { x: 10, y: 10 });
+world.addComponent(enemyId, "velocity", { dx: -1, dy: 0 });
 
 // Using Entity Proxy
 const playerId = world.create();
 const player = world.getEntity(playerId);
-player.addComponent<Position>("position", { x: 0, y: 0 });
-player.addComponent<Velocity>("velocity", { dx: 1, dy: 1 });
+player.addComponent("position", { x: 0, y: 0 });
+player.addComponent("velocity", { dx: 1, dy: 1 });
 
 // Create a system
 function MovementSystem() {
@@ -128,7 +128,7 @@ const exists = world.exist(entityId);
 
 ```typescript
 // Add component
-world.addComponent<ComponentSchema | any>(entityId, "position", { x: 0, y: 0 });
+world.addComponent(entityId, "position", { x: 0, y: 0 });
 
 // Remove component
 world.removeComponent(entityId, "position");
@@ -233,8 +233,8 @@ const renderSystem = {
   query: world.include("position", "sprite")
   update() {
     this.query.entities.forEach((entity) => {
-      const position = entity.get<Position>("position");
-      const sprite = entity.get<Sprite>("sprite");
+      const position = entity.getComponent<Position>("position");
+      const sprite = entity.getComponent<Sprite>("sprite");
 
       // Render entity
       drawSprite(sprite, position.x, position.y);
@@ -246,8 +246,8 @@ const query = world.include("position", "sprite")
 
 function renderSystem(){
   query.entities.forEach((entity) => {
-    const position = entity.get<Position>("position");
-    const sprite = entity.get<Sprite>("sprite");
+    const position = entity.getComponent<Position>("position");
+    const sprite = entity.getComponent<Sprite>("sprite");
 
     // Render entity
     drawSprite(sprite, position.x, position.y);
