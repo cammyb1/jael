@@ -7,7 +7,6 @@ import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
 import { Query, QueryHashCache, type QueryConfig } from "./Query";
 import { SparseSet } from "./helpers/SparseSet";
-import { SystemManager, type System } from "./managers/SystemManager";
 import { PrefabManager, type Prefab } from "./managers/PrefabManager";
 
 export interface WorldEvents {
@@ -17,13 +16,11 @@ export interface WorldEvents {
   componentRemoved: { entityId: number; component: ComponentKey };
   prefabCreated: { prefab: string };
   prefabInstantiated: { prefab: string; entityId: number };
-  updated: void;
 }
 
 export default class World extends EventRegistry<WorldEvents> {
   entityManager: EntityManager;
   componentManager: ComponentManager;
-  systemManager: SystemManager;
   prefabManager: PrefabManager;
   _queries: Map<number, Query> = new Map();
 
@@ -35,9 +32,9 @@ export default class World extends EventRegistry<WorldEvents> {
     this.componentManager = new ComponentManager(this);
     this.prefabManager = new PrefabManager(this);
 
-    this.systemManager = new SystemManager();
     this.version = 0;
 
+    // Propagate events
     this.entityManager.on("create", (entityId: number) => {
       this.emit("entityCreated", {
         entityId,
@@ -92,7 +89,6 @@ export default class World extends EventRegistry<WorldEvents> {
     if (!query) {
       query = new Query(config, this);
       this._queries.set(hash, query);
-      this.emit("create", query);
       this._updateQueries();
     }
     return query;
@@ -149,31 +145,18 @@ export default class World extends EventRegistry<WorldEvents> {
     this.entityManager.destroy(entityId);
   }
 
-  addSystem(sys: System) {
-    this.systemManager.addSystem(sys);
-  }
-
-  removeSystem(sys: System) {
-    this.systemManager.removeSystem(sys);
-  }
-
   addComponent(entityId: number, compKey: ComponentKey, compValue: any) {
     this.componentManager.addComponent(entityId, compKey, compValue);
   }
 
-  getComponent<T>(entityId: number, compKey: ComponentKey): T {
-    return this.componentManager.getComponent(entityId, compKey);
+  getComponent<T = any>(
+    entityId: number,
+    compKey: ComponentKey,
+  ): T | undefined {
+    return this.componentManager.getComponent<T>(entityId, compKey);
   }
 
   removeComponent(entityId: number, compKey: ComponentKey) {
     this.componentManager.removeComponent(entityId, compKey);
-  }
-
-  update() {
-    this.systemManager.systemList.forEach((system: System) => {
-      system.update();
-    });
-
-    this.emit("updated");
   }
 }

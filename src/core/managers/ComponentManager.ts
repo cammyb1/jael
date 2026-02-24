@@ -51,10 +51,10 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     this.emit("add", { entityId, component: key });
   }
 
-  getComponent(
+  getComponent<T extends ComponentSchema[ComponentKey] = any>(
     entityId: number,
     key: ComponentKey,
-  ): ComponentSchema[ComponentKey] | undefined {
+  ): T | undefined {
     if (!this.hasComponent(entityId, key)) return;
     return this.componentSet[entityId][key];
   }

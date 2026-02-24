@@ -19,9 +19,11 @@ _A modern, performant, and user-friendly Entity Component System library written
   - [Query](#query)
   - [System](#system)
   - [Prefab](#prefab)
+- [Helpers](#helpers)
   - [SparseSet](#sparseset)
   - [Time](#time)
   - [EventRegistry](#event-registry)
+  - [Input](#input)
 - [Best Practices](#best-practices)
 - [Advanced Usage](#advanced-usage)
 - [Planned Features](#planned-features)
@@ -44,7 +46,7 @@ npm install @jael-ecs/core
 ## Quick Start
 
 ```typescript
-import { World, System } from "@jael-ecs/core";
+import { World } from "@jael-ecs/core";
 
 // Create your world
 const world = new World();
@@ -62,42 +64,36 @@ interface Velocity {
 
 // Create entities
 const playerId = world.create();
-world.addComponent(playerId, "position", { x: 0, y: 0 });
-world.addComponent(playerId, "velocity", { dx: 1, dy: 1 });
+world.addComponent<Position>(playerId, "position", { x: 0, y: 0 });
+world.addComponent<Velocity>(playerId, "velocity", { dx: 1, dy: 1 });
 
 const enemyId = world.create();
-world.addComponent(enemyId, "position", { x: 10, y: 10 });
-world.addComponent(enemyId, "velocity", { dx: -1, dy: 0 });
+world.addComponent<Position>(enemyId, "position", { x: 10, y: 10 });
+world.addComponent<Velocity>(enemyId, "velocity", { dx: -1, dy: 0 });
 
 // Using Entity Proxy
 const playerId = world.create();
 const player = world.getEntity(playerId);
-player.add("position", { x: 0, y: 0 });
-player.add("velocity", { dx: 1, dy: 1 });
+player.addComponent<Position>("position", { x: 0, y: 0 });
+player.addComponent<Velocity>("velocity", { dx: 1, dy: 1 });
 
 // Create a system
-const movementSystem: System = {
-  priority: 0,
-  update() {
-    const query = world.include("position", "velocity");
+function MovementSystem() {
+  const query = world.include("position", "velocity");
 
-    // Get direct proxy access
-    query.entities.forEach((entity) => {
-      const position = entity.get<Position>("position");
-      const velocity = entity.get<Velocity>("velocity");
+  // Get direct proxy access
+  query.entities.forEach((entity) => {
+    const position = entity.getComponent<Position>("position");
+    const velocity = entity.getComponent<Velocity>("velocity");
 
-      position.x += velocity.dx * (Time.delta || 0.016);
-      position.y += velocity.dy * (Time.delta || 0.016);
-    });
-  },
-};
-
-// Add system to world
-world.addSystem(movementSystem);
+    position.x += velocity.dx * (Time.delta || 0.016);
+    position.y += velocity.dy * (Time.delta || 0.016);
+  });
+}
 
 // Game loop
 function gameLoop() {
-  world.update();
+  MovementSystem();
 }
 ```
 
@@ -107,7 +103,7 @@ Jael follows the classic Entity Component System pattern:
 
 - **Entities**: Unique identifiers (just IDs) - no data attached
 - **Components**: Pure data containers (no logic)
-- **Systems**: Process entities with specific component combinations
+- **Systems**: Process entities with specific component combinations as plain js functions
 
 ## API Reference
 
@@ -132,23 +128,16 @@ const exists = world.exist(entityId);
 
 ```typescript
 // Add component
-world.addComponent(entityId, "position", { x: 0, y: 0 });
+world.addComponent<ComponentSchema | any>(entityId, "position", { x: 0, y: 0 });
 
 // Remove component
 world.removeComponent(entityId, "position");
 
 // Get component
-const position = world.getComponent<Position>(entityId, "position");
-```
-
-#### System Management
-
-```typescript
-// Add system
-world.addSystem(yourSystem);
-
-// Remove system
-world.removeSystem(yourSystem);
+const position = world.getComponent<ComponentSchema | any>(
+  entityId,
+  "position",
+);
 ```
 
 #### Events
@@ -178,10 +167,6 @@ world.on("prefabCreated", ({ prefab }) => {
 world.on("prefabInstantiated", ({ prefab; entityId }) => {
   console.log(`Prefab ${prefab} instantiated whitin world with id ${entityId}`);
 });
-
-world.on("updated", () => {
-  console.log("World updated");
-});
 ```
 
 ### Entity
@@ -194,7 +179,7 @@ const entityId = world.create();
 const entity = world.getEntity(entityId); // Returns Entity class proxy
 
 // Add component
-entity.add("position", { x: 0, y: 0 });
+entity.addComponent<ComponentSchema | any>("position", { x: 0, y: 0 });
 
 // Remove component
 entity.remove("position");
@@ -239,26 +224,15 @@ const entityId = world.instantiate("living"); // number | undefined;
 
 ### System
 
-Systems contain the game logic that processes entities with specific components.
-
-```typescript
-interface System {
-  priority: number; // Execution order (lower = earlier)
-  exit?(): void; // Cleanup when removed
-  update(): void; // Main update logic
-}
-```
+Systems are not implemented as a class because of javascript simplicity, they can be plain objects/functions
 
 #### Example System
 
 ```typescript
-const renderSystem: System = {
-  priority: 100, // Render after all other systems
-
-  update(dt) {
-    const renderableQuery = world.include("position", "sprite");
-
-    renderableQuery.entities.forEach((entity) => {
+const renderSystem = {
+  query: world.include("position", "sprite")
+  update() {
+    this.query.entities.forEach((entity) => {
       const position = entity.get<Position>("position");
       const sprite = entity.get<Sprite>("sprite");
 
@@ -266,11 +240,26 @@ const renderSystem: System = {
       drawSprite(sprite, position.x, position.y);
     });
   },
-
-  exit() {
-    console.log("Render system cleanup");
-  },
 };
+
+const query = world.include("position", "sprite")
+
+function renderSystem(){
+  query.entities.forEach((entity) => {
+    const position = entity.get<Position>("position");
+    const sprite = entity.get<Sprite>("sprite");
+
+    // Render entity
+    drawSprite(sprite, position.x, position.y);
+  });
+}
+
+
+function loop(){
+  renderSystem.update(); // As plain object
+  renderSystem() // as Function
+}
+
 ```
 
 ### Query
@@ -328,13 +317,17 @@ const isEmpty = query.size() === 0;
 
 // Subscribe to query events
 query.on("added", (entityId: number) => {
-  // Entity added
+  // Entity added or updated
 });
 
 query.on("removed", (entityId: number) => {
   // Entity removed
 });
 ```
+
+### Helpers
+
+Helper classes to help you build your tool as easy as posible.
 
 ### SparseSet
 
@@ -384,6 +377,80 @@ time.on("update", () => {
 });
 ```
 
+### Input
+
+Abstract class as wrapper for pointer and keyboard classes, this only unify both of them.
+
+```typescript
+import { Input } from "@jael-ecs/core";
+
+//Connect listeners. Window class as default argument.
+Input.connect(Document | Window | Element);
+
+// Pointer position as Duplet{x,y}.
+Input.pointer.position;
+Input.pointer.on("down", (e: PointerEvent) => {
+  // On pointer down
+});
+Input.pointer.on("up", (e: PointerEvent) => {
+  // On pointer up
+});
+
+interface InputConfig {
+  mandatory: boolean // Make every key mandatory to be pressed
+}
+
+Input.keyboard.register("forward", ["KeyW", "ArrowUp"], config?: InputConfig)
+Input.keyboard.registerMultiple({
+  forward: {keys: ["KeyW", "ArrowUp"], config?: InputConfig},
+  backward: {keys: ["KeyS", "ArrowDown"], config?: InputConfig},
+})
+Input.keyboard.unregister("forward") // Remove all reference to forward keys
+
+Input.keyboard.isPressed("forward") // Returns true if key/s are pressed
+Input.keyboard.isDown("forward") // Returns true if key is down, false on next frame
+Input.keyboard.isUp("forward") // Returns true if key is released, false on next frame
+
+
+Input.keyboard.clearSet() // Makes everything false
+
+
+// Cleanup
+Input.disconnect();
+```
+
+Keyboard and Pointer classes
+
+```typescript
+import { Keyboard, Pointer } from "@jael-ecs/core";
+
+const pointer = new Pointer();
+const keyboard = new Keyboard();
+
+//Connect listeners.
+pointer.connect();
+keyboard.connect(Document | Window | Element);
+
+// Cleanup
+keyboard.disconnect();
+pointer.disconnect();
+```
+
+```typescript
+import { Time } from "@jael-ecs/core";
+
+Time.start();
+
+// Access time properties
+const dt = Time.delta; // Delta time
+const elapsed = Time.elapsed; // Total elapsed time
+
+// Events
+time.on("update", () => {
+  console.log(`Frame: ${dt}ms, Total: ${total}ms`);
+});
+```
+
 ### Event Registry
 
 Base class providing event emission and listening capabilities.
@@ -394,7 +461,6 @@ interface WorldEvents {
   entityDestroyed: { entity: Entity };
   componentAdded: { entity: Entity; component: string };
   componentRemoved: { entity: Entity; component: string };
-  updated: void;
 }
 
 interface QueryEvents {
@@ -443,68 +509,16 @@ interface BadComponent {
 }
 ```
 
-### 2. System Organization
-
-```typescript
-// Organize systems by functionality and priority
-const INPUT_PRIORITY = 0;
-const PHYSICS_PRIORITY = 50;
-const LOGIC_PRIORITY = 100;
-const RENDER_PRIORITY = 200;
-
-const inputSystem = { priority: INPUT_PRIORITY /* ... */ };
-const physicsSystem = { priority: PHYSICS_PRIORITY /* ... */ };
-const renderSystem = { priority: RENDER_PRIORITY /* ... */ };
-```
-
-### 3. Query Optimization
+### 2. Query Optimization
 
 ```typescript
 // ✅ Good: Cache queries when possible
-class MovementSystem implements System {
-  private movementQuery: Query;
-  priority: number = 1
+const reusableQuery = world.include('position', 'velocity');
 
-  constructor(private world: World) {
-    this.movementQuery = world.include('position', 'velocity');
-  }
-
-  update() {
-    this.movementQuery.entities.forEach((entity) => {
-      // Handle entity movement
-    })
-  }
-}
-
-world.addSystem(new MovementSystem());
-
-// System as function
-function MovementSystem(world: World): System {
-  const  movementQuery = world.include('position', 'velocity');
-  return {
-    priority: 1,
-    update(){
-      this.movementQuery.entities.forEach((entity) => {
-      // Handle entity movement
-      })
-    }
-  }
-}
-
-world.addSystem(MovementSystem(world))
-
-// ✅ Also good: extend System for js Object:
-
-type MovementSystem = { movementQuery: Query | null } & System;
-
-const movementSystem: MovementSystem = {
-  movementQuery: world.include("position", "velocity");
-  priority: 1;
-  update(){
-    this.movementQuery?.entities.forEach((entity) => {
-      // Handle entity movement
-    })
-  }
+function MovementSystem(){
+  reusableQuery.entities.forEach((entity) => {
+    // Handle entity movement
+  })
 }
 
 // ✅ Also good: Use world.include/exclude for simple cases
@@ -514,17 +528,13 @@ update() {
 }
 ```
 
-### 4. Memory Management
+### 3. Memory Management
 
 ```typescript
 // Remember to clean up when removing entities
 world.destroy(entityId); // Automatically removes all components and query pointer
 world.removeComponent(entityId, compKey); // Removes comp from entity
-world.removeSystem(system); // Remove system and calls exit function
 world.removePrefab(prefabName); // Remove prefab if exist
-
-// Clean up systems if they have resources
-system.exit?.(); // Called automatically when removed from world
 ```
 
 ## Advanced Usage
@@ -574,6 +584,7 @@ const prefab = world.createPrefab("test", {
 ## Planned Features
 
 - ~~Instancing / Prefab system.~~
+- ~~Input Helper with pointer and keyboard management.~~
 - Prefab updated scheme updates instances
 - Serialization for raw export
 - Implement basic one level tag manager.

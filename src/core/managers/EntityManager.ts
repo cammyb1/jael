@@ -17,7 +17,7 @@ export class Entity {
    * @param compType Component name
    * @param compValue Component value
    */
-  add(compType: ComponentKey, compValue: any) {
+  addComponent(compType: ComponentKey, compValue: any) {
     this._world.addComponent(this.id, compType, compValue);
   }
 
@@ -25,7 +25,7 @@ export class Entity {
    * Remove component of current entity.
    * @param compType Component name
    */
-  remove(compType: ComponentKey) {
+  removeComponent(compType: ComponentKey) {
     this._world.removeComponent(this.id, compType);
   }
 
@@ -34,7 +34,7 @@ export class Entity {
    * @param compType Component name
    * @returns boolean
    */
-  has(compKey: ComponentKey): boolean {
+  hasComponent(compKey: ComponentKey): boolean {
     return this._world.componentManager.hasComponent(this.id, compKey);
   }
 
@@ -43,8 +43,8 @@ export class Entity {
    * @param compType Component name
    * @returns Return component schema with T(any as default) as type
    */
-  get<T = any>(compType: ComponentKey): T {
-    return this._world.componentManager.getComponent(this.id, compType);
+  getComponent<T = any>(compType: ComponentKey): T | undefined {
+    return this._world.componentManager.getComponent<T>(this.id, compType);
   }
 }
 

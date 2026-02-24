@@ -1,10 +1,18 @@
 import EventRegistry from "./core/helpers/EventRegistry";
-import { type System, SystemManager } from "./core/managers/SystemManager";
 import {
   type Entity,
   EntityManager,
   type EntityManagerEvents,
 } from "./core/managers/EntityManager";
+import {
+  Input,
+  type InputConfig,
+  type InputEvents,
+  type PointerEvents,
+  Pointer,
+  Keyboard,
+  type KeyDirection,
+} from "./core/helpers/Input";
 import {
   type ComponentSchema,
   type ComponentKey,
@@ -22,7 +30,10 @@ import { Time, type TimeEvents } from "./core/helpers/Time";
 import World, { type WorldEvents } from "./core/World";
 
 export {
-  type System,
+  type InputConfig,
+  type InputEvents,
+  type KeyDirection,
+  type PointerEvents,
   type Entity,
   type Prefab,
   type QueryConfig,
@@ -34,12 +45,14 @@ export {
   type QueryEvents,
   type TimeEvents,
   type WorldEvents,
+  Pointer,
+  Keyboard,
+  Input,
   Query,
   World,
   Time,
   SparseSet,
   EventRegistry,
-  SystemManager,
   EntityManager,
   PrefabManager,
   ComponentManager,
