@@ -628,7 +628,7 @@ npm run build
 
 [⭐ Star this repo if it helped you!](https://github.com/cammyb1/jael)
 
-[☕ You can buy me a coffee :)](https://buymeacoffee.com/jonathanva5)
+[☕ You can buy me a coffee :)](https://ko-fi.com/cammyb1)
 
 **Built with ❤️ by [cammyb1](https://github.com/cammyb1)**
 
