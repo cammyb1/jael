@@ -37,6 +37,10 @@ _A modern, performant, and user-friendly Entity Component System library written
 - **Query System** - Optimized cache query system for entity packets
 - **Minimal Bundle size** - Compact bundle size without dependencies.(48kb 📦)
 
+## Projects using Jael
+
+- [topwavy](https://github.com/cammyb1/topwavy) - A simple wave survival game demonstrating Jael's ECS capabilities
+
 ## Installation
 
 ```bash
@@ -619,6 +623,8 @@ npm run build
 - TypeScript for providing excellent type safety and developer experience
 
 ---
+
+This README has been Vibecoded almost entirely due to the author's null skills at writing readmes 😄. But all the rest of the code has been written from scratch.
 
 ## License
 
