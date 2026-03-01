@@ -35,7 +35,7 @@ _A modern, performant, and user-friendly Entity Component System library written
 - **User Friendly API** - Clean, fluent api that's easy to learn
 - **High Performance** - Optimized SparseSet implementation for fast entity lookups
 - **Query System** - Optimized cache query system for entity packets
-- **Minimal Bundle size** - Compact bundle size without dependencies.(48kb 📦)
+- **Minimal Bundle size** - Compact bundle size without dependencies.(56kb 📦)
 
 ## Projects using Jael
 
