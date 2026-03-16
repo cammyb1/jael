@@ -26,7 +26,7 @@ import {
   type Prefab,
 } from "./core/managers/PrefabManager";
 import { SparseSet } from "./core/helpers/SparseSet";
-import { Time, type TimeEvents } from "./core/helpers/Time";
+import Time, { type TimeEvents } from "./core/helpers/Time";
 import World, { type WorldEvents } from "./core/World";
 
 export {

@@ -75,6 +75,14 @@ export class Query extends EventRegistry<QueryEvents> {
     );
   }
 
+  firstId(): number {
+    return this._entityMap.first();
+  }
+
+  firstEntity(): Entity {
+    return this.entities[0];
+  }
+
   size(): number {
     return this._entityMap.size();
   }

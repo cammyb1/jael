@@ -4,23 +4,31 @@ export interface TimeEvents {
   update: void;
 }
 
-class TimeSingleton extends EventRegistry<TimeEvents> {
+export default class Time extends EventRegistry<TimeEvents> {
   private _startTime: number = 0;
   private _oldTime: number = 0;
   private _requestId: number = 0;
+  private _running: boolean = false;
 
-  public running: boolean = false;
   public delta: number = 0;
   public elapsed: number = 0;
 
-  constructor() {
+  constructor({ autostart }: { autostart: boolean } = { autostart: true }) {
     super();
+
+    if (autostart) {
+      this.start();
+    }
+  }
+
+  isRunning(): boolean {
+    return this._running;
   }
 
   private _loop() {
     let diff = 0;
 
-    if (this.running) {
+    if (this._running) {
       const current = performance.now();
 
       diff = (current - this._oldTime) / 1000;
@@ -36,22 +44,22 @@ class TimeSingleton extends EventRegistry<TimeEvents> {
   }
 
   public start() {
+    if (this._running) return;
     this._startTime = performance.now();
     this._oldTime = this._startTime;
     this.elapsed = 0;
     this.delta = 0;
 
-    this.running = true;
+    this._running = true;
 
     this._loop();
   }
 
   public stop() {
-    this.running = false;
+    if (!this._running) return;
+    this._running = false;
 
     cancelAnimationFrame(this._requestId);
     this._requestId = 0;
   }
 }
-
-export let Time = new TimeSingleton();
