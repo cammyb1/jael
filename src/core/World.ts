@@ -8,7 +8,11 @@ import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
 import { Query, QueryHashCache, type QueryConfig } from "./Query";
 import { SparseSet } from "./helpers/SparseSet";
-import { PrefabManager, type Prefab } from "./managers/PrefabManager";
+import {
+  PrefabManager,
+  type Prefab,
+  type PrefabManagerSerialized,
+} from "./managers/PrefabManager";
 
 export interface WorldEvents {
   entityCreated: { entityId: number };
@@ -22,6 +26,7 @@ export interface WorldEvents {
 export interface WorldSerialized {
   entityManager: number[];
   componentManager: ComponentManagerSerialized;
+  prefabManager: PrefabManagerSerialized;
 }
 
 export default class World extends EventRegistry<WorldEvents> {
@@ -155,7 +160,10 @@ export default class World extends EventRegistry<WorldEvents> {
     this.componentManager.addComponent(entityId, compKey, compValue);
   }
 
-  getComponent<T = unknown>(entityId: number, compKey: ComponentKey): T {
+  getComponent<T = unknown>(
+    entityId: number,
+    compKey: ComponentKey,
+  ): T | undefined {
     return this.componentManager.getComponent<T>(entityId, compKey);
   }
 
@@ -163,12 +171,31 @@ export default class World extends EventRegistry<WorldEvents> {
     this.componentManager.removeComponent(entityId, compKey);
   }
 
+  nuke() {
+    this.entityManager.clear();
+    this.prefabManager.clear();
+    this.componentManager.clear();
+    this._updateQueries();
+    this.version = 0;
+  }
+
   serialize(): WorldSerialized {
     const data = {
       entityManager: this.entityManager.serialize(),
       componentManager: this.componentManager.serialize(),
+      prefabManager: this.prefabManager.serialize(),
     };
 
     return data;
+  }
+
+  deserialize(data: WorldSerialized) {
+    this.nuke();
+
+    this.entityManager.deserialize(data.entityManager);
+    this.componentManager.deserialize(data.componentManager);
+    this.prefabManager.deserialize(data.prefabManager);
+
+    this._updateQueries();
   }
 }

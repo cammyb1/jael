@@ -25,6 +25,7 @@ import {
   type PrefabManagerEvents,
   type Prefab,
 } from "./core/managers/PrefabManager";
+import { Serializer } from "./core/helpers/Serializer";
 import { SparseSet } from "./core/helpers/SparseSet";
 import Time, { type TimeEvents } from "./core/helpers/Time";
 import World, { type WorldEvents } from "./core/World";
@@ -45,6 +46,7 @@ export {
   type QueryEvents,
   type TimeEvents,
   type WorldEvents,
+  Serializer,
   Pointer,
   Keyboard,
   Input,

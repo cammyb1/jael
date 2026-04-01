@@ -65,7 +65,8 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   getComponent<T extends ComponentSchema[ComponentKey] = unknown>(
     entityId: number,
     key: ComponentKey,
-  ): T {
+  ): T | undefined {
+    if (this.componentSet[entityId]?.[key] === undefined) return;
     return this.componentSet[entityId][key] as T;
   }
 

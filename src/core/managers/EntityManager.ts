@@ -43,7 +43,7 @@ export class Entity {
    * @param compType Component name
    * @returns Return component schema with T(any as default) as type
    */
-  getComponent<T = unknown>(compType: ComponentKey): T {
+  getComponent<T = unknown>(compType: ComponentKey): T | undefined {
     return this._world.componentManager.getComponent<T>(this.id, compType);
   }
 }

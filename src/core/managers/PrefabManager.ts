@@ -14,6 +14,8 @@ export interface PrefabManagerEvents {
   instantiated: { prefab: string; entityId: number };
 }
 
+export type PrefabManagerSerialized = Record<string, ComponentSchema>;
+
 export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   protected prefabs: Record<string, Prefab> = {};
   private _world: World;
@@ -27,6 +29,11 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
 
   hasPrefab(name: string): boolean {
     return !!this.prefabs[name];
+  }
+
+  clear() {
+    this.prefabs = {};
+    this._nexPrefabId = 0;
   }
 
   getPrefab(name: string): Prefab | undefined {
@@ -74,5 +81,23 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     this.emit("instantiated", { prefab: prefab.name, entityId });
 
     return entityId;
+  }
+
+  serialize(): PrefabManagerSerialized {
+    let data: PrefabManagerSerialized = {};
+
+    for (let name in this.prefabs) {
+      data[name] = this.prefabs[name].schema;
+    }
+
+    return data;
+  }
+
+  deserialize(data: PrefabManagerSerialized) {
+    this.clear();
+
+    for (let name in data) {
+      this.createFromSchema(name, data[name]);
+    }
   }
 }

@@ -139,9 +139,12 @@ class Serializer {
 
     for (let detector of this._cloneDetectors) {
       type = detector(value);
+      if (type) {
+        return type;
+      }
     }
 
-    return type || "primitive";
+    return "primitive";
   }
 
   cloneScheme(scheme: ComponentSchema): ComponentSchema {
