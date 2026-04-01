@@ -1,6 +1,7 @@
 import {
   ComponentManager,
   type ComponentKey,
+  type ComponentManagerSerialized,
   type ComponentSchema,
 } from "./managers/ComponentManager";
 import { Entity, EntityManager } from "./managers/EntityManager";
@@ -16,6 +17,11 @@ export interface WorldEvents {
   componentRemoved: { entityId: number; component: ComponentKey };
   prefabCreated: { prefab: string };
   prefabInstantiated: { prefab: string; entityId: number };
+}
+
+export interface WorldSerialized {
+  entityManager: number[];
+  componentManager: ComponentManagerSerialized;
 }
 
 export default class World extends EventRegistry<WorldEvents> {
@@ -149,14 +155,20 @@ export default class World extends EventRegistry<WorldEvents> {
     this.componentManager.addComponent(entityId, compKey, compValue);
   }
 
-  getComponent<T = any>(
-    entityId: number,
-    compKey: ComponentKey,
-  ): T | undefined {
+  getComponent<T = unknown>(entityId: number, compKey: ComponentKey): T {
     return this.componentManager.getComponent<T>(entityId, compKey);
   }
 
   removeComponent(entityId: number, compKey: ComponentKey) {
     this.componentManager.removeComponent(entityId, compKey);
+  }
+
+  serialize(): WorldSerialized {
+    const data = {
+      entityManager: this.entityManager.serialize(),
+      componentManager: this.componentManager.serialize(),
+    };
+
+    return data;
   }
 }

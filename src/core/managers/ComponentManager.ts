@@ -1,13 +1,24 @@
 import EventRegistry from "../helpers/EventRegistry";
+import { Serializer } from "../helpers/Serializer";
 import type World from "../World";
 
 export type ComponentKey = string;
-export type ComponentSchema = Record<ComponentKey, any>;
+export type ComponentSchema = Record<ComponentKey, unknown>;
 
 export interface ComponentManagerEvents {
   add: { entityId: number; component: ComponentKey };
   remove: { entityId: number; component: ComponentKey };
 }
+
+export interface SerializedComponent {
+  _type: string;
+  data: any;
+}
+
+export type ComponentManagerSerialized = Record<
+  number,
+  Record<string, SerializedComponent>
+>;
 
 export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   private componentSet: Record<number, ComponentSchema> = {};
@@ -24,7 +35,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     delete this.componentSet[entityId];
   }
 
-  getComponentsSchema(entityId: number): ComponentSchema | undefined {
+  getComponentsSchema(entityId: number): ComponentSchema {
     return this.componentSet[entityId];
   }
 
@@ -51,12 +62,11 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     this.emit("add", { entityId, component: key });
   }
 
-  getComponent<T extends ComponentSchema[ComponentKey] = any>(
+  getComponent<T extends ComponentSchema[ComponentKey] = unknown>(
     entityId: number,
     key: ComponentKey,
-  ): T | undefined {
-    if (!this.hasComponent(entityId, key)) return;
-    return this.componentSet[entityId][key];
+  ): T {
+    return this.componentSet[entityId][key] as T;
   }
 
   cleanDirtyEntities() {
@@ -67,6 +77,28 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     const schema = this.componentSet[entityId];
     if (!schema) return false;
     return key in schema;
+  }
+
+  clear() {
+    this.cleanDirtyEntities();
+    this.componentSet = {};
+  }
+
+  serialize(): ComponentManagerSerialized {
+    const data: ComponentManagerSerialized = {};
+    Object.keys(this.componentSet).forEach((k: string) => {
+      const id = Number(k);
+      data[id] = Serializer.serializeSchema(this.componentSet[id]);
+    });
+    return data;
+  }
+
+  deserialize(payload: ComponentManagerSerialized) {
+    this.clear();
+    for (const [entityId, schema] of Object.entries(payload)) {
+      const id = Number(entityId);
+      this.componentSet[id] = Serializer.deserializeSchema(schema);
+    }
   }
 
   removeComponent(entityId: number, key: ComponentKey) {

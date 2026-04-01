@@ -1,15 +1,13 @@
 import type { ComponentSchema } from "./ComponentManager";
 import type World from "../World";
 import EventRegistry from "../helpers/EventRegistry";
+import { Serializer } from "../helpers/Serializer";
 
 export interface Prefab {
   readonly id: number;
   readonly name: string;
   readonly schema: ComponentSchema;
 }
-
-type CloneFunction = (v: any) => any;
-type DetectorType = (v: any) => string | null;
 
 export interface PrefabManagerEvents {
   created: { prefab: string };
@@ -20,66 +18,11 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
   protected prefabs: Record<string, Prefab> = {};
   private _world: World;
 
-  private _detectors: DetectorType[] = [];
-  private _typeCache: Map<string, string | null> = new Map();
-  private _cloners: Record<string, CloneFunction> = {};
-
   private _nexPrefabId = 0;
 
   constructor(world: World) {
     super();
     this._world = world;
-
-    this.addCloner("array", (v: any[]) => v.slice());
-    this.addCloner("primitive", (v) => v);
-    this.addCloner("plainObject", (v) => Object.assign({}, v));
-
-    this.addDetector((value) => {
-      if (Array.isArray(value)) return "array";
-      if (typeof value !== "object" || value === null) return "primitive";
-      if (value.constructor === Object) return "plainObject";
-      return null;
-    });
-  }
-
-  addCloner(type: string, fn: CloneFunction) {
-    if (this._cloners[type]) return;
-    this._cloners[type] = fn;
-  }
-
-  addDetector(detector: DetectorType) {
-    if (this._detectors.includes(detector)) return;
-    this._detectors.push(detector);
-  }
-
-  private _getSchemaAttrType(value: any): string {
-    const constructor = value.constructor.name;
-    let type = this._typeCache.get(constructor);
-
-    if (!type) {
-      for (let detector of this._detectors) {
-        type = detector(value);
-        if (type) {
-          this._typeCache.set(constructor, type);
-          return type;
-        }
-      }
-      this._typeCache.set(constructor, "primitive");
-    }
-
-    return type || "primitive";
-  }
-
-  private _cloneScheme(scheme: ComponentSchema): ComponentSchema {
-    const cloned: ComponentSchema = {};
-
-    for (let [key, value] of Object.entries(scheme)) {
-      const type = this._getSchemaAttrType(value);
-      const cloner = this._cloners[type];
-      cloned[key] = cloner ? cloner(value) : value;
-    }
-
-    return cloned;
   }
 
   hasPrefab(name: string): boolean {
@@ -101,7 +44,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     const prefab: Prefab = {
       id: this._nexPrefabId,
       name,
-      schema: this._cloneScheme(schema),
+      schema: Serializer.cloneScheme(schema),
     };
     this.prefabs[prefab.name] = prefab;
     this._nexPrefabId++;
@@ -126,7 +69,7 @@ export class PrefabManager extends EventRegistry<PrefabManagerEvents> {
     const entityId = this._world.create();
     this._world.componentManager.setComponentsSchema(
       entityId,
-      this._cloneScheme(prefab.schema),
+      Serializer.cloneScheme(prefab.schema),
     );
     this.emit("instantiated", { prefab: prefab.name, entityId });
 

@@ -43,7 +43,7 @@ export class Entity {
    * @param compType Component name
    * @returns Return component schema with T(any as default) as type
    */
-  getComponent<T = any>(compType: ComponentKey): T | undefined {
+  getComponent<T = unknown>(compType: ComponentKey): T {
     return this._world.componentManager.getComponent<T>(this.id, compType);
   }
 }
@@ -62,6 +62,11 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     return this.entityMap;
   }
 
+  clear() {
+    this.entities.clear();
+    this.nextId = 0;
+  }
+
   create(): number {
     const id = this.nextId++;
     this.entities.add(id);
@@ -69,6 +74,18 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     this.emit("create", id);
 
     return id;
+  }
+
+  serialize(): number[] {
+    return Array.from(this.entityMap);
+  }
+
+  deserialize(list: number[]) {
+    this.clear();
+    [...list].sort().forEach((item) => {
+      this.entities.add(item);
+    });
+    this.nextId = Math.max(...list, 0);
   }
 
   exist(id: number): boolean {
