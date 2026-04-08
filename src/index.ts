@@ -16,11 +16,12 @@ import {
 import {
   type ComponentSchema,
   type ComponentKey,
+  type ComponentManagerSerialized,
   ComponentManager,
   type ComponentManagerEvents,
 } from "./core/managers/ComponentManager";
 import { Query, type QueryConfig, type QueryEvents } from "./core/Query";
-import { Serializer } from "./core/helpers/Serializer";
+import { type WorldSerialized, Serializer } from "./core/helpers/Serializer";
 import { SparseSet } from "./core/helpers/SparseSet";
 import Time, { type TimeEvents } from "./core/helpers/Time";
 import World, { type WorldEvents } from "./core/World";
@@ -33,6 +34,8 @@ export {
   type Entity,
   type QueryConfig,
   type ComponentSchema,
+  type ComponentManagerSerialized,
+  type WorldSerialized,
   type ComponentKey,
   type EntityManagerEvents,
   type ComponentManagerEvents,
