@@ -175,44 +175,6 @@ world.on("playerScored", ({ points }) => {
 
 Jael provides a powerful serialization system for saving and loading world state.
 
-```typescript
-// Serialize world to JavaScript object
-const data = world.serialize();
-
-// Save as JSON string
-const json = JSON.stringify(data);
-
-// Load from JSON string
-world.deserialize(JSON.parse(json));
-```
-
-#### Extending Serializers
-
-You can register custom serializers for complex types (like Three.js objects):
-
-```typescript
-import { Serializer } from "@jael-ecs/core";
-
-// Register custom type detector
-Serializer.registerSerializeDetector((value: any) => {
-  if (value.isObject3D) return "transform";
-  if (value.isVector3) return "vector";
-  return null;
-});
-
-// Register serializer/deserializer for custom types
-Serializer.registerSerializer(
-  "transform",
-  (v) => v.toJSON(),                      // Serialize: object to JSON
-  (v) => objectLoader.parse(v),           // Deserialize: JSON to object
-);
-
-Serializer.registerSerializer(
-  "vector",
-  (v) => v.toArray(),                     // Serialize: Vector3 to array
-  (v) => new Vector3().fromArray(v),     // Deserialize: array to Vector3
-);
-```
 
 ## Planned Features
 
