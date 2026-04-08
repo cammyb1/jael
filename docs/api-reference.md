@@ -8,6 +8,7 @@ Here you can find all the documentation relative to the classes that uses this l
 - [Entity](#entity)
 - [Query](#query)
 - [System](#system)
+- [Serialization](#serialization)
 - [Helpers](#helpers)
   - [SparseSet](#sparseset)
   - [Time](#time)
@@ -34,17 +35,28 @@ const exists = world.exist(entityId);
 #### Component Management
 
 ```typescript
-// Add component
-world.addComponent(entityId, "position", { x: 0, y: 0 });
+// Add component with type safety
+world.addComponent<Position>(entityId, "position", { x: 0, y: 0 });
+
+// Create an entity with multiple components in one call:
+// TypeScript - type-safe
+const entityId = world.createWith<{ position: Position; velocity: Velocity }>({
+  position: { x: 0, y: 0 },
+  velocity: { dx: 1, dy: 1 },
+});
+
+// JavaScript - dynamic
+const entityId = world.createWith({
+  position: { x: 0, y: 0 },
+  velocity: { dx: 1, dy: 1 },
+});
 
 // Remove component
 world.removeComponent(entityId, "position");
 
-// Get component
-const position = world.getComponent<ComponentSchema | any>(
-  entityId,
-  "position",
-);
+// Get component with type safety
+const position = world.getComponent<Position>(entityId, "position");
+
 ```
 
 #### Events
@@ -66,6 +78,7 @@ world.on("componentAdded", ({ entityId, component }) => {
 world.on("componentRemoved", ({ entityId, component }) => {
   console.log(`Component ${component} removed from entity ${entityId}`);
 });
+
 ```
 
 ### Entity
@@ -77,17 +90,17 @@ Base entity class for intuitive component management as proxy around id
 const entityId = world.create();
 const entity = world.getEntity(entityId); // Returns Entity class proxy
 
-// Add component
-entity.addComponent<ComponentSchema | any>("position", { x: 0, y: 0 });
+// Add component with type safety
+entity.addComponent<Position>("position", { x: 0, y: 0 });
 
 // Remove component
-entity.remove("position");
+entity.removeComponent("position");
 
 // Check if component exist
-const posExist = entity.has("position");
+const posExist = entity.hasComponent("position");
 
-// Get curren value of the component
-const compSchema = entity.get("position");
+// Get current value of the component with type safety
+const position = entity.getComponent<Position>("position");
 
 entity.id; // Returns unique entity id from proxy
 ```
@@ -193,6 +206,68 @@ query.on("added", (entityId: number) => {
 query.on("removed", (entityId: number) => {
   // Entity removed
 });
+```
+
+### Serialization
+
+Jael provides a powerful serialization system for saving and loading world state.
+
+#### Basic Usage
+
+```typescript
+// Serialize world to JavaScript object
+const data = world.serialize();
+
+// Save as JSON string
+const json = JSON.stringify(data);
+
+// Load from JSON string
+world.deserialize(JSON.parse(json));
+```
+
+#### Extending Serializers
+
+You can register custom serializers for complex types (like Three.js objects):
+
+```typescript
+import { Serializer } from "@jael-ecs/core";
+
+// Register custom type detector
+Serializer.registerSerializeDetector((value: any) => {
+  if (value.isObject3D) return "transform";
+  if (value.isVector3) return "vector";
+  return null;
+});
+
+// Register serializer/deserializer for custom types
+Serializer.registerSerializer(
+  "transform",
+  (v) => v.toJSON(), // Serialize: object to JSON (three.js method)
+  (v) => objectLoader.parse(v), // Deserialize: JSON to object
+);
+
+Serializer.registerSerializer(
+  "vector",
+  (v) => v.toArray(), // Serialize: Vector3 to array
+  (v) => new Vector3().fromArray(v), // Deserialize: array to Vector3
+);
+```
+
+#### World Serialized Interface
+
+The serialized data structure:
+
+```typescript
+interface WorldSerialized {
+  entities: number[]; // Entity IDs
+  components: Record<number, Record<string, SerializedComponent>>; // Components by entity
+  version: number; // World version
+}
+
+interface SerializedComponent {
+  _type: string; // Detected type (primitive, array, plainObject, custom)
+  data: any; // Serialized data
+}
 ```
 
 ### Helpers
