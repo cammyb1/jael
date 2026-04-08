@@ -2,21 +2,28 @@ import type {
   ComponentSchema,
   SerializedComponent,
 } from "../managers/ComponentManager";
+import type World from "../World";
 
 export type DetectorType = (v: any) => string | null;
 export type SerializeFunction = (v: any) => any;
 export type DeserializeFunction = (v: any) => any;
 
-class Serializer {
-  private _serializeDetectors: DetectorType[] = [];
+export interface WorldSerialized {
+  entities: number[];
+  components: Record<number, Record<string, SerializedComponent>>;
+  version: number;
+}
 
-  private _serializers: Map<string, SerializeFunction> = new Map();
-  private _deserializers: Map<string, DeserializeFunction> = new Map();
+export class Serializer {
+  private static _serializeDetectors: DetectorType[] = [];
 
-  constructor() {
+  private static _serializers: Map<string, SerializeFunction> = new Map();
+  private static _deserializers: Map<string, DeserializeFunction> = new Map();
+
+  static {
     this.registerSerializer(
       "array",
-      (v: any[]) => v.slice(),
+      (v: any[]) => v,
       (v) => Array.from(v),
     );
     this.registerSerializer(
@@ -38,7 +45,7 @@ class Serializer {
     });
   }
 
-  registerSerializer(
+  static registerSerializer(
     type: string,
     serializer: SerializeFunction,
     deserializer: DeserializeFunction,
@@ -47,12 +54,12 @@ class Serializer {
     this._deserializers.set(type, deserializer);
   }
 
-  registerSerializeDetector(detector: DetectorType) {
+  static registerSerializeDetector(detector: DetectorType) {
     if (this._serializeDetectors.includes(detector)) return;
     this._serializeDetectors.push(detector);
   }
 
-  private _getSerializeType(value: any): string {
+  private static getSerializeType(value: any): string {
     const constructorName = value?.constructor?.name;
     if (!constructorName) return "primitive";
     if (this._serializers.has(constructorName)) {
@@ -69,13 +76,13 @@ class Serializer {
     return "primitive";
   }
 
-  serializeSchema(
+  static serializeSchema(
     schema: ComponentSchema,
   ): Record<string, SerializedComponent> {
     const result: Record<string, SerializedComponent> = {};
 
     for (const [key, value] of Object.entries(schema)) {
-      const type = this._getSerializeType(value);
+      const type = this.getSerializeType(value);
       const serializer = this._serializers.get(type);
 
       if (serializer) {
@@ -94,7 +101,7 @@ class Serializer {
     return result;
   }
 
-  deserializeSchema(
+  static deserializeSchema(
     data: Record<string, SerializedComponent>,
   ): ComponentSchema {
     const result: ComponentSchema = {};
@@ -111,8 +118,21 @@ class Serializer {
 
     return result;
   }
+
+  static serializeWorld(world: World): WorldSerialized {
+    return {
+      entities: world.entityManager.serialize(),
+      components: world.componentManager.serialize(),
+      version: world.version,
+    };
+  }
+
+  static deserializeWorld(world: World, data: WorldSerialized) {
+    if (data.version === undefined) return;
+
+    world.nuke();
+    world.entityManager.deserialize(data.entities);
+    world.componentManager.deserialize(data.components);
+    world.version = data.version;
+  }
 }
-
-const serializerInstance = new Serializer();
-
-export { serializerInstance as Serializer };

@@ -14,29 +14,13 @@ export interface QueryEvents {
 }
 
 export class QueryHashCache {
-  public static cache: Map<QueryConfig, number> = new Map();
+  public static cache: Map<QueryConfig, string> = new Map();
 
-  public static generate(config: QueryConfig): number {
+  public static generate(config: QueryConfig): string {
     const existing = this.cache.get(config);
     if (existing) return existing;
 
-    const inString = config.include
-      ?.map((s) => s.trim())
-      .filter((s) => s)
-      .join("_");
-
-    const outString = config.exclude
-      ?.map((s) => s.trim())
-      .filter((s) => s)
-      .join("_");
-
-    const formedString = "in_" + inString + "_out_" + outString;
-
-    let hash = 0;
-    for (const char of formedString) {
-      hash = (hash << 5) - hash + char.charCodeAt(0);
-      hash |= 0; // Constrain to 32bit integer
-    }
+    const hash = JSON.stringify(config);
     QueryHashCache.cache.set(config, hash);
     return hash;
   }
@@ -79,7 +63,7 @@ export class Query extends EventRegistry<QueryEvents> {
     return this._entityMap.first();
   }
 
-  firstEntity(): Entity {
+  firstEntity(): Entity | undefined {
     return this.entities[0];
   }
 

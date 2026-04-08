@@ -17,7 +17,7 @@ export class Entity {
    * @param compType Component name
    * @param compValue Component value
    */
-  addComponent(compType: ComponentKey, compValue: any) {
+  addComponent<T>(compType: ComponentKey, compValue: T) {
     this._world.addComponent(this.id, compType, compValue);
   }
 
@@ -43,7 +43,7 @@ export class Entity {
    * @param compType Component name
    * @returns Return component schema with T(any as default) as type
    */
-  getComponent<T = unknown>(compType: ComponentKey): T | undefined {
+  getComponent<T>(compType: ComponentKey): T | undefined {
     return this._world.componentManager.getComponent<T>(this.id, compType);
   }
 }
@@ -80,12 +80,12 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     return Array.from(this.entityMap);
   }
 
-  deserialize(list: number[]) {
+  deserialize(data: number[]) {
     this.clear();
-    [...list].sort().forEach((item) => {
-      this.entities.add(item);
+    [...data].sort().forEach((e) => {
+      this.entityMap.add(e);
     });
-    this.nextId = Math.max(...list, 0);
+    this.nextId = Math.max(...(data.length > 0 ? data : [0]), 0);
   }
 
   exist(id: number): boolean {

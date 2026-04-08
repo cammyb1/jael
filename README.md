@@ -57,18 +57,18 @@ interface Velocity {
 
 // Create entities
 const playerId = world.create();
-world.addComponent(playerId, "position", { x: 0, y: 0 });
-world.addComponent(playerId, "velocity", { dx: 1, dy: 1 });
+world.addComponent<Position>(playerId, "position", { x: 0, y: 0 });
+world.addComponent<Velocity>(playerId, "velocity", { dx: 1, dy: 1 });
 
 const enemyId = world.create();
-world.addComponent(enemyId, "position", { x: 10, y: 10 });
-world.addComponent(enemyId, "velocity", { dx: -1, dy: 0 });
+world.addComponent<Position>(enemyId, "position", { x: 10, y: 10 });
+world.addComponent<Velocity>(enemyId, "velocity", { dx: -1, dy: 0 });
 
 // Using Entity Proxy
 const playerId = world.create();
 const player = world.getEntity(playerId);
-player.addComponent("position", { x: 0, y: 0 });
-player.addComponent("velocity", { dx: 1, dy: 1 });
+player.addComponent<Position>("position", { x: 0, y: 0 });
+player.addComponent<Velocity>("velocity", { dx: 1, dy: 1 });
 
 // Create a system
 function MovementSystem() {
@@ -103,7 +103,7 @@ Jael follows the classic Entity Component System pattern:
 ### 1. Component Design
 
 ```typescript
-// ✅ Good: Simple data containers
+// Good: Simple data containers
 interface Position {
   x: number;
   y: number;
@@ -114,7 +114,7 @@ interface Health {
   max: number;
 }
 
-// ❌ Avoid: Methods in components
+// Avoid: Methods in components
 interface BadComponent {
   x: number;
   move(): void; // Put this in a system!
@@ -124,7 +124,7 @@ interface BadComponent {
 ### 2. Query Optimization
 
 ```typescript
-// ✅ Good: Cache queries when possible
+// Good: Cache queries when possible
 const reusableQuery = world.include('position', 'velocity');
 
 function MovementSystem(){
@@ -133,7 +133,7 @@ function MovementSystem(){
   })
 }
 
-// ✅ Also good: Use world.include/exclude for simple cases
+// Also good: Use world.include/exclude for simple cases
 update() {
   const entities = this.world.include('position', 'velocity');
   // ...
@@ -168,28 +168,6 @@ world.emit("playerScored", { points: 100 });
 // Listen to custom events
 world.on("playerScored", ({ points }) => {
   updateScore(points);
-});
-```
-
-### Extending Prefab Manager
-
-Current Prefab manager only supports array/primivite/planeObjets but can be extended.
-
-```typescript
-// Create detector function - (any) => string|null
-
-world.prefabManager.addDetector((compValue) => {
-  if (typeof compValue === "object" && compValue.isTest) return "test";
-  return null;
-});
-
-// Create cloner for new Detector function
-world.prefabManager.addCloner("test", (value: any) => value.clone());
-
-// This adds support for complex component values
-const prefab = world.createPrefab("test", {
-  name: "test",
-  testComp: { isTest: true, clone: (v) => ({ ...v }), ...rest },
 });
 ```
 
@@ -239,9 +217,6 @@ This README has been Vibecoded almost entirely due to the author's null skills a
 <div align="center">
 
 [⭐ Star this repo if it helped you!](https://github.com/cammyb1/jael)
-
 [☕ You can buy me a coffee :)](https://ko-fi.com/cammyb1)
-
-**Built with ❤️ by [cammyb1](https://github.com/cammyb1)**
 
 </div>

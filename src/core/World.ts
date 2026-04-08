@@ -1,12 +1,12 @@
 import {
   ComponentManager,
   type ComponentKey,
-  type ComponentManagerSerialized,
 } from "./managers/ComponentManager";
 import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
 import { Query, QueryHashCache, type QueryConfig } from "./Query";
 import { SparseSet } from "./helpers/SparseSet";
+import { Serializer, type WorldSerialized } from "./helpers/Serializer";
 
 export interface WorldEvents {
   entityCreated: { entityId: number };
@@ -15,15 +15,10 @@ export interface WorldEvents {
   componentRemoved: { entityId: number; component: ComponentKey };
 }
 
-export interface WorldSerialized {
-  entityManager: number[];
-  componentManager: ComponentManagerSerialized;
-}
-
 export default class World extends EventRegistry<WorldEvents> {
   entityManager: EntityManager;
   componentManager: ComponentManager;
-  _queries: Map<number, Query> = new Map();
+  _queries: Map<string, Query> = new Map();
 
   version: number;
 
@@ -77,8 +72,7 @@ export default class World extends EventRegistry<WorldEvents> {
 
   query(config: QueryConfig): Query {
     const hash = QueryHashCache.generate(config);
-    const existingQuery = this._queries.get(hash);
-    let query = existingQuery;
+    let query = this._queries.get(hash);
     if (!query) {
       query = new Query(config, this);
       this._queries.set(hash, query);
@@ -109,6 +103,12 @@ export default class World extends EventRegistry<WorldEvents> {
     return this.query({ include: [], exclude: comps });
   }
 
+  createWith<T extends Record<string, any>>(schema: T): number {
+    const id = this.create();
+    this.componentManager.setComponentsSchema(id, schema);
+    return id;
+  }
+
   create(): number {
     return this.entityManager.create();
   }
@@ -117,14 +117,11 @@ export default class World extends EventRegistry<WorldEvents> {
     this.entityManager.destroy(entityId);
   }
 
-  addComponent(entityId: number, compKey: ComponentKey, compValue: any) {
+  addComponent<T>(entityId: number, compKey: ComponentKey, compValue: T) {
     this.componentManager.addComponent(entityId, compKey, compValue);
   }
 
-  getComponent<T = unknown>(
-    entityId: number,
-    compKey: ComponentKey,
-  ): T | undefined {
+  getComponent<T>(entityId: number, compKey: ComponentKey): T | undefined {
     return this.componentManager.getComponent<T>(entityId, compKey);
   }
 
@@ -135,25 +132,16 @@ export default class World extends EventRegistry<WorldEvents> {
   nuke() {
     this.entityManager.clear();
     this.componentManager.clear();
-    this._updateQueries();
+    this._queries.clear();
     this.version = 0;
   }
 
   serialize(): WorldSerialized {
-    const data = {
-      entityManager: this.entityManager.serialize(),
-      componentManager: this.componentManager.serialize(),
-    };
-
-    return data;
+    return Serializer.serializeWorld(this);
   }
 
   deserialize(data: WorldSerialized) {
-    this.nuke();
-
-    this.entityManager.deserialize(data.entityManager);
-    this.componentManager.deserialize(data.componentManager);
-
+    Serializer.deserializeWorld(this, data);
     this._updateQueries();
   }
 }

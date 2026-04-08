@@ -39,17 +39,13 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     return this.componentSet[entityId];
   }
 
-  setComponentsSchema(entityId: number, schema: ComponentSchema) {
+  setComponentsSchema(entityId: number, schema: Record<string, any>) {
     if (!this.componentSet[entityId]) {
       this.componentSet[entityId] = schema;
     }
   }
 
-  addComponent(
-    entityId: number,
-    key: ComponentKey,
-    value: ComponentSchema[ComponentKey],
-  ) {
+  addComponent<T>(entityId: number, key: ComponentKey, value: T) {
     if (!this.world.exist(entityId)) return;
     const schema: ComponentSchema | undefined = this.componentSet[entityId];
     if (!schema) {
@@ -62,12 +58,10 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     this.emit("add", { entityId, component: key });
   }
 
-  getComponent<T extends ComponentSchema[ComponentKey] = unknown>(
-    entityId: number,
-    key: ComponentKey,
-  ): T | undefined {
-    if (this.componentSet[entityId]?.[key] === undefined) return;
-    return this.componentSet[entityId][key] as T;
+  getComponent<T>(entityId: number, key: ComponentKey): T | undefined {
+    const schema = this.componentSet[entityId] ?? {};
+    if (!(key in schema)) return;
+    return schema[key] as T;
   }
 
   cleanDirtyEntities() {
@@ -94,9 +88,9 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     return data;
   }
 
-  deserialize(payload: ComponentManagerSerialized) {
+  deserialize(data: ComponentManagerSerialized) {
     this.clear();
-    for (const [entityId, schema] of Object.entries(payload)) {
+    for (const [entityId, schema] of Object.entries(data)) {
       const id = Number(entityId);
       this.componentSet[id] = Serializer.deserializeSchema(schema);
     }
