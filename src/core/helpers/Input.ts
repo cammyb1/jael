@@ -32,47 +32,51 @@ export interface InputEvents {
 export class Pointer extends EventRegistry<PointerEvents> {
   readonly position: Duplet = { x: 0, y: 0 };
   private _connected: boolean = false;
+  private dom: ConnectAble = window;
 
   constructor() {
     super();
     this.position = { x: 0, y: 0 };
   }
 
-  private _onMove(e: PointerEvent) {
-    const { clientX, clientY } = e;
+  private _onMove(e: Event) {
+    const { clientX, clientY } = e as PointerEvent;
     this.position.x = (clientX / window.innerWidth) * 2 - 1;
     this.position.y = -(clientY / window.innerHeight) * 2 + 1;
   }
 
-  private _onDown(e: PointerEvent) {
-    this.emit("down", e);
+  private _onDown(e: Event) {
+    this.emit("down", e as PointerEvent);
   }
 
-  private _onUp(e: PointerEvent) {
-    this.emit("up", e);
+  private _onUp(e: Event) {
+    this.emit("up", e as PointerEvent);
   }
 
-  connect() {
-    if (this._connected) {
+  connect(el: ConnectAble | undefined) {
+    if (this.dom && this._connected) {
       this.disconnect();
     }
+
+    this.dom = el ?? this.dom;
     this._connected = true;
-    window.addEventListener("pointermove", this._onMove.bind(this));
-    window.addEventListener("pointerdown", this._onDown.bind(this));
-    window.addEventListener("pointerup", this._onUp.bind(this));
+    this.dom.addEventListener("pointermove", this._onMove.bind(this));
+    this.dom.addEventListener("pointerdown", this._onDown.bind(this));
+    this.dom.addEventListener("pointerup", this._onUp.bind(this));
   }
 
   disconnect() {
     this._connected = false;
-    window.removeEventListener("pointermove", this._onMove.bind(this));
-    window.removeEventListener("pointerdown", this._onDown.bind(this));
-    window.removeEventListener("pointerup", this._onUp.bind(this));
+    this.dom.removeEventListener("pointermove", this._onMove.bind(this));
+    this.dom.removeEventListener("pointerdown", this._onDown.bind(this));
+    this.dom.removeEventListener("pointerup", this._onUp.bind(this));
+    this.dom = window;
   }
 }
 
 export class Keyboard extends EventRegistry<InputEvents> {
   keys: Map<string, InputConfig>;
-  private dom: ConnectAble | undefined;
+  private dom: ConnectAble = window;
   private _connected: Boolean = false;
   constructor() {
     super();
@@ -94,7 +98,7 @@ export class Keyboard extends EventRegistry<InputEvents> {
   }
 
   connect(dom: ConnectAble) {
-    if (this.dom) {
+    if (this.dom && this._connected) {
       this.disconnect();
     }
 
@@ -107,12 +111,13 @@ export class Keyboard extends EventRegistry<InputEvents> {
   }
 
   disconnect() {
-    if (!this.dom) return;
+    if (!this._connected) return;
     this._connected = false;
     this.dom.removeEventListener("keydown", this._keyDown.bind(this));
     this.dom.removeEventListener("keyup", this._keyUp.bind(this));
     window.removeEventListener("visibilitychanged", this._onBlur.bind(this));
     window.removeEventListener("blur", this._onBlur.bind(this));
+    this.dom = window;
   }
 
   registerMultiple(keyMap: {
@@ -241,7 +246,7 @@ export abstract class Input {
 
   static connect(dom: ConnectAble = window) {
     this.keyboard.connect(dom);
-    this.pointer.connect();
+    this.pointer.connect(dom);
   }
 
   static disconnect() {

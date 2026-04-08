@@ -2,37 +2,27 @@ import {
   ComponentManager,
   type ComponentKey,
   type ComponentManagerSerialized,
-  type ComponentSchema,
 } from "./managers/ComponentManager";
 import { Entity, EntityManager } from "./managers/EntityManager";
 import EventRegistry from "./helpers/EventRegistry";
 import { Query, QueryHashCache, type QueryConfig } from "./Query";
 import { SparseSet } from "./helpers/SparseSet";
-import {
-  PrefabManager,
-  type Prefab,
-  type PrefabManagerSerialized,
-} from "./managers/PrefabManager";
 
 export interface WorldEvents {
   entityCreated: { entityId: number };
   entityDestroyed: { entityId: number };
   componentAdded: { entityId: number; component: ComponentKey };
   componentRemoved: { entityId: number; component: ComponentKey };
-  prefabCreated: { prefab: string };
-  prefabInstantiated: { prefab: string; entityId: number };
 }
 
 export interface WorldSerialized {
   entityManager: number[];
   componentManager: ComponentManagerSerialized;
-  prefabManager: PrefabManagerSerialized;
 }
 
 export default class World extends EventRegistry<WorldEvents> {
   entityManager: EntityManager;
   componentManager: ComponentManager;
-  prefabManager: PrefabManager;
   _queries: Map<number, Query> = new Map();
 
   version: number;
@@ -41,7 +31,6 @@ export default class World extends EventRegistry<WorldEvents> {
     super();
     this.entityManager = new EntityManager(this);
     this.componentManager = new ComponentManager(this);
-    this.prefabManager = new PrefabManager(this);
 
     this.version = 0;
 
@@ -76,13 +65,6 @@ export default class World extends EventRegistry<WorldEvents> {
       }
       this._updateQueries();
     });
-
-    this.prefabManager.on("created", (event) =>
-      this.emit("prefabCreated", event),
-    );
-    this.prefabManager.on("instantiated", (event) =>
-      this.emit("prefabInstantiated", event),
-    );
   }
 
   getEntity(id: number): Entity | undefined {
@@ -131,27 +113,6 @@ export default class World extends EventRegistry<WorldEvents> {
     return this.entityManager.create();
   }
 
-  createPrefab(
-    name: string,
-    arg: ComponentSchema | number,
-  ): Prefab | undefined {
-    return typeof arg === "number"
-      ? this.prefabManager.createFromEntity(name, arg)
-      : this.prefabManager.createFromSchema(name, arg);
-  }
-
-  getPrefab(name: string): Prefab | undefined {
-    return this.prefabManager.getPrefab(name);
-  }
-
-  removePrefab(name: string) {
-    this.prefabManager.removePrefab(name);
-  }
-
-  instantiate(name: string): number | undefined {
-    return this.prefabManager.instantiate(name);
-  }
-
   destroy(entityId: number) {
     this.entityManager.destroy(entityId);
   }
@@ -173,7 +134,6 @@ export default class World extends EventRegistry<WorldEvents> {
 
   nuke() {
     this.entityManager.clear();
-    this.prefabManager.clear();
     this.componentManager.clear();
     this._updateQueries();
     this.version = 0;
@@ -183,7 +143,6 @@ export default class World extends EventRegistry<WorldEvents> {
     const data = {
       entityManager: this.entityManager.serialize(),
       componentManager: this.componentManager.serialize(),
-      prefabManager: this.prefabManager.serialize(),
     };
 
     return data;
@@ -194,7 +153,6 @@ export default class World extends EventRegistry<WorldEvents> {
 
     this.entityManager.deserialize(data.entityManager);
     this.componentManager.deserialize(data.componentManager);
-    this.prefabManager.deserialize(data.prefabManager);
 
     this._updateQueries();
   }

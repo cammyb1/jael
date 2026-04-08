@@ -20,11 +20,6 @@ import {
   type ComponentManagerEvents,
 } from "./core/managers/ComponentManager";
 import { Query, type QueryConfig, type QueryEvents } from "./core/Query";
-import {
-  PrefabManager,
-  type PrefabManagerEvents,
-  type Prefab,
-} from "./core/managers/PrefabManager";
 import { Serializer } from "./core/helpers/Serializer";
 import { SparseSet } from "./core/helpers/SparseSet";
 import Time, { type TimeEvents } from "./core/helpers/Time";
@@ -36,12 +31,10 @@ export {
   type KeyDirection,
   type PointerEvents,
   type Entity,
-  type Prefab,
   type QueryConfig,
   type ComponentSchema,
   type ComponentKey,
   type EntityManagerEvents,
-  type PrefabManagerEvents,
   type ComponentManagerEvents,
   type QueryEvents,
   type TimeEvents,
@@ -56,6 +49,5 @@ export {
   SparseSet,
   EventRegistry,
   EntityManager,
-  PrefabManager,
   ComponentManager,
 };

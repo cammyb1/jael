@@ -8,11 +8,10 @@ Here you can find all the documentation relative to the classes that uses this l
 - [Entity](#entity)
 - [Query](#query)
 - [System](#system)
-- [Prefab](#prefab)
 - [Helpers](#helpers)
   - [SparseSet](#sparseset)
   - [Time](#time)
-  - [EventRegistry](#event-registry)
+  - [EventRegistry](#event-registry)1
   - [Input](#input)
 
 ### World
@@ -67,14 +66,6 @@ world.on("componentAdded", ({ entityId, component }) => {
 world.on("componentRemoved", ({ entityId, component }) => {
   console.log(`Component ${component} removed from entity ${entityId}`);
 });
-
-world.on("prefabCreated", ({ prefab }) => {
-  console.log(`Prefab ${prefab} has been created.`);
-});
-
-world.on("prefabInstantiated", ({ prefab; entityId }) => {
-  console.log(`Prefab ${prefab} instantiated whitin world with id ${entityId}`);
-});
 ```
 
 ### Entity
@@ -99,35 +90,6 @@ const posExist = entity.has("position");
 const compSchema = entity.get("position");
 
 entity.id; // Returns unique entity id from proxy
-```
-
-### Prefab
-
-Components schema template for easy multiple entities creation/instancing with primitive schemas
-
-```typescript
-const world = new World();
-
-const livingSchema = {
-  damage: 20,
-  position: { x: 0, y: 0, z: 0 },
-  velocity: { x: 0, y: 0, z: 0 },
-  health: { current: 100, max: 100 },
-};
-
-// Create from schema
-const prefab = world.createPrefab("living", livingSchema);
-
-// Create from existing Entity
-const entityId = world.create();
-world.addComponent(entityId, "position", { x: 0, y: 0, z: 0 });
-world.addComponent(entityId, "velocity", { x: 0, y: 0, z: 0 });
-world.addComponent(entityId, "health", { current: 100, max: 100 });
-
-const prefab = world.createPrefab("living", entityId);
-
-// Instantiate existing prefab
-const entityId = world.instantiate("living"); // number | undefined;
 ```
 
 ### System
@@ -360,6 +322,7 @@ time.on("update", () => {
   console.log(`Frame: ${dt}ms, Total: ${total}ms`);
 });
 ```
+
 ### Event Registry
 
 Base class providing event emission and listening capabilities.

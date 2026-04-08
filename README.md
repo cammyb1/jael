@@ -195,10 +195,8 @@ const prefab = world.createPrefab("test", {
 
 ## Planned Features
 
-- ~~Instancing / Prefab system.~~
 - ~~Input Helper with pointer and keyboard management.~~
-- Prefab updated scheme updates instances
-- Serialization for raw export
+- ~~Serialization for raw export
 - Implement basic one level tag manager.
 - Entity with childrens and parents.
 - React wrapper (?)
