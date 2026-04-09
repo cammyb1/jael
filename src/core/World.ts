@@ -40,8 +40,8 @@ export default class World extends EventRegistry<WorldEvents> {
       this.emit("entityDestroyed", {
         entityId,
       });
-      this._updateQueries();
       this.componentManager.clearComponentSchema(entityId);
+      this._updateQueries();
     });
     this.componentManager.on("add", ({ entityId, component }) => {
       this.emit("componentAdded", {
