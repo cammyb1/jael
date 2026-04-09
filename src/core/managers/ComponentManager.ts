@@ -32,7 +32,13 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
 
   clearComponentSchema(entityId: number) {
     if (!this.componentSet[entityId]) return;
+    const schema = this.componentSet[entityId];
     delete this.componentSet[entityId];
+
+    this.dirtyEntities.push(entityId);
+    Object.keys(schema).forEach((compName) => {
+      this.emit("remove", { entityId, component: compName });
+    });
   }
 
   getComponentsSchema(entityId: number): ComponentSchema {
@@ -42,6 +48,10 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
   setComponentsSchema(entityId: number, schema: Record<string, any>) {
     if (!this.componentSet[entityId]) {
       this.componentSet[entityId] = schema;
+      this.dirtyEntities.push(entityId);
+      Object.keys(schema).forEach((compName) => {
+        this.emit("add", { entityId, component: compName });
+      });
     }
   }
 
