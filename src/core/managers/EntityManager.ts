@@ -13,7 +13,7 @@ export class Entity {
   }
 
   /**
-   * Add component to current entity.
+   * Add / update component to current entity.
    * @param compType Component name
    * @param compValue Component value
    */
@@ -36,6 +36,16 @@ export class Entity {
    */
   hasComponent(compKey: ComponentKey): boolean {
     return this._world.componentManager.hasComponent(this.id, compKey);
+  }
+
+  /**
+   * Get component names attached to this entity.
+   * @returns array of component names as string
+   */
+  getComponentNames(): string[] {
+    return Object.keys(
+      this._world.componentManager.getComponentsSchema(this.id),
+    );
   }
 
   /**

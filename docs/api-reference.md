@@ -102,6 +102,9 @@ const posExist = entity.hasComponent("position");
 // Get current value of the component with type safety
 const position = entity.getComponent<Position>("position");
 
+// Get current entity component names
+const components: string[] = entity.getComponentNames()
+
 entity.id; // Returns unique entity id from proxy
 ```
 
