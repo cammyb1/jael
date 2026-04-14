@@ -30,6 +30,9 @@ _A modern, performant, and user-friendly Entity Component System library written
 
 - [topwavy](https://github.com/cammyb1/topwavy) - A simple wave survival game demonstrating Jael's ECS capabilities
 
+## Check api documentation
+### [HERE](docs/api-reference.md)
+
 ## Installation
 
 ```bash
@@ -146,7 +149,6 @@ update() {
 // Remember to clean up when removing entities
 world.destroy(entityId); // Automatically removes all components and query pointer
 world.removeComponent(entityId, compKey); // Removes comp from entity
-world.removePrefab(prefabName); // Remove prefab if exist
 ```
 
 ## Advanced Usage
@@ -224,4 +226,5 @@ This README has been Vibecoded almost entirely due to the author's null skills a
 [⭐ Star this repo if it helped you!](https://github.com/cammyb1/jael)
 [☕ You can buy me a coffee :)](https://ko-fi.com/cammyb1)
 
+built with ❤️
 </div>
