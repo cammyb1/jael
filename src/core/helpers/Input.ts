@@ -41,8 +41,16 @@ export class Pointer extends EventRegistry<PointerEvents> {
 
   private _onMove(e: Event) {
     const { clientX, clientY } = e as PointerEvent;
-    this.position.x = (clientX / window.innerWidth) * 2 - 1;
-    this.position.y = -(clientY / window.innerHeight) * 2 + 1;
+
+    if (this.dom instanceof Window) {
+      this.position.x = (clientX / window.innerWidth) * 2 - 1;
+      this.position.y = -(clientY / window.innerHeight) * 2 + 1;
+    } else {
+      const _dom = this.dom instanceof Document ? this.dom.body : this.dom;
+      const rect = _dom.getBoundingClientRect();
+      this.position.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      this.position.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    }
   }
 
   private _onDown(e: Event) {

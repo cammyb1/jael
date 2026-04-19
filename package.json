@@ -1,6 +1,6 @@
 {
   "name": "@jael-ecs/core",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Entity Component System library with typescript",
   "keywords": [
     "ecs",
@@ -26,7 +26,6 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "vite",
     "build": "tsc && vite build",
     "watch": "tsc && vite build --mode development --watch",
     "preview": "vite preview"
