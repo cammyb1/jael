@@ -133,6 +133,6 @@ export class Serializer {
     world.nuke();
     world.entityManager.deserialize(data.entities);
     world.componentManager.deserialize(data.components);
-    world.version = data.version;
+    world.version = data.version + 1;
   }
 }

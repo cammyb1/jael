@@ -217,6 +217,9 @@ Jael provides a powerful serialization system for saving and loading world state
 
 #### Basic Usage
 
+> [!WARNING]
+> Deserialize destroys all active queries because there is no point if the active refs will lose their pointer.
+
 ```typescript
 // Serialize world to JavaScript object
 const data = world.serialize();

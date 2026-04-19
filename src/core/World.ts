@@ -142,6 +142,5 @@ export default class World extends EventRegistry<WorldEvents> {
 
   deserialize(data: WorldSerialized) {
     Serializer.deserializeWorld(this, data);
-    this._updateQueries();
   }
 }

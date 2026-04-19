@@ -73,7 +73,9 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
   }
 
   clear() {
-    this.entities.clear();
+    for (let entityId of this.entityMap) {
+      this.destroy(entityId);
+    }
     this.nextId = 0;
   }
 
@@ -94,6 +96,7 @@ export class EntityManager extends EventRegistry<EntityManagerEvents> {
     this.clear();
     [...data].sort().forEach((e) => {
       this.entityMap.add(e);
+      this.emit("create", e);
     });
     this.nextId = Math.max(...(data.length > 0 ? data : [0]), 0);
   }

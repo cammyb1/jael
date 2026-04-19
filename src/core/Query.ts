@@ -13,7 +13,7 @@ export interface QueryEvents {
   removed: number;
 }
 
-export class QueryHashCache {
+export abstract class QueryHashCache {
   public static cache: Map<QueryConfig, string> = new Map();
 
   public static generate(config: QueryConfig): string {

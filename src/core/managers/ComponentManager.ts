@@ -103,6 +103,7 @@ export class ComponentManager extends EventRegistry<ComponentManagerEvents> {
     for (const [entityId, schema] of Object.entries(data)) {
       const id = Number(entityId);
       this.componentSet[id] = Serializer.deserializeSchema(schema);
+      this.dirtyEntities.push(id);
     }
   }
 
