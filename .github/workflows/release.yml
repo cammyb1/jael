@@ -45,20 +45,20 @@ jobs:
 
       - name: Create GitHub Release (only for major)
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.package-version.outputs.version }}
         run: |
-          # Check if this is a major version (first digit change)
           MAJOR=$(echo $VERSION | cut -d. -f1)
           if git rev-list -n 1 v* 2>/dev/null; then
             LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
             LAST_MAJOR=$(echo $LAST_TAG | cut -d. -f1 | tr -d 'v')
             if [ "$MAJOR" != "$LAST_MAJOR" ]; then
-              gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "## Major Release v${VERSION}
-
-This major release includes significant changes. Check the commit history for details."
+              gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Major Release v${VERSION}: significant changes included. Check the commit history for details."
               echo "Created GitHub Release for major version v${VERSION}"
             fi
+          else
+            gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Initial Release v${VERSION}"
+          fi
           else
             # First release
             gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "## Initial Release v${VERSION}"
