@@ -49,15 +49,19 @@ jobs:
           VERSION: ${{ steps.package-version.outputs.version }}
         run: |
           MAJOR=$(echo $VERSION | cut -d. -f1)
-          if git rev-list -n 1 v* 2>/dev/null; then
-            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            # First release
+            gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Initial Release v${VERSION}"
+          else
             LAST_MAJOR=$(echo $LAST_TAG | cut -d. -f1 | tr -d 'v')
             if [ "$MAJOR" != "$LAST_MAJOR" ]; then
-              gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Major Release v${VERSION}: significant changes included. Check the commit history for details."
+              gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Major Release v${VERSION}: significant changes included."
               echo "Created GitHub Release for major version v${VERSION}"
+            else
+              echo "Not a major version bump, skipping GitHub Release"
             fi
-          else
-            gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Initial Release v${VERSION}"
           fi
           else
             # First release
