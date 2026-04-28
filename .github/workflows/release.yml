@@ -28,62 +28,14 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
-          echo "Always auth on registry.npmjs.org" >> ~/.npmrc
-          cat ~/.npmrc
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build
-        run: bun run build
-
-      - name: Get version from package.json
-        id: package-version
-        run: |
-          VERSION=$(bun -e "console.log(require('./package.json').version)")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if major release
-        id: check-major
-        run: |
-          VERSION=$(echo ${{ steps.package-version.outputs.version }})
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -z "$LAST_TAG" ]; then
-            echo "is_major=true" >> $GITHUB_OUTPUT
-            echo "first_release=true" >> $GITHUB_OUTPUT
-          else
-            LAST_MAJOR=$(echo $LAST_TAG | cut -d. -f1 | tr -d 'v')
-            if [ "$MAJOR" != "$LAST_MAJOR" ]; then
-              echo "is_major=true" >> $GITHUB_OUTPUT
-            else
-              echo "is_major=false" >> $GITHUB_OUTPUT
-            fi
-            echo "first_release=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create GitHub Release (only for major)
-        if: steps.check-major.outputs.is_major == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.package-version.outputs.version }}
-        run: |
-          if [ "${{ steps.check-major.outputs.first_release }}" == "true" ]; then
-            gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Initial Release v${VERSION}"
-          else
-            gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "Major Release v${VERSION}: significant changes included."
-          fi
-          echo "Created GitHub Release for major version v${VERSION}"
-          else
-            # First release
-            gh release create "v${VERSION}" --title "v${VERSION} 🚀" --notes "## Initial Release v${VERSION}"
-          fi
+          # Create .npmrc in project directory
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+          echo "registry=https://registry.npmjs.org/" >> .npmrc
+          echo "always-auth=true" >> .npmrc
+          cat .npmrc
 
       - name: Publish to npm
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          bun publish --access public --ignore-scripts
+          bun publish --access public --ignore-scripts --registry https://registry.npmjs.org/
