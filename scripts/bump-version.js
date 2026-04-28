@@ -1,5 +1,6 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 
 // Leer el mensaje del commit actual
 const commitMsgPath = path.join('.git', 'COMMIT_EDITMSG');
@@ -51,7 +52,6 @@ fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 console.log(`Version bumped from ${version} to ${newVersion}`);
 
 // Hacer stage del package.json modificado
-const { execSync } = require('child_process');
 try {
   execSync('git add package.json', { stdio: 'inherit' });
 } catch (e) {
