@@ -31,6 +31,10 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^24.2.9",
     "typescript": "~5.9.3",
     "unplugin-dts": "^1.0.0-beta.6",
     "vite": "^7.2.4"
