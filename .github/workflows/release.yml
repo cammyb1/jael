@@ -37,9 +37,46 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Release
+      - name: Release and get version info
+        id: semrel
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: bunx semantic-release
+        run: |
+          # Run semantic-release in dry-run to get version info
+          OUTPUT=$(bunx semantic-release --dry-run 2>&1 | tee output.txt)
+          
+          # Extract next version
+          VERSION=$(grep -oP "The next release version is \K[0-9]+\.[0-9]+\.[0-9]+" output.txt || echo "")
+          
+          if [ -z "$VERSION" ]; then
+            echo "No release needed"
+            echo "release_needed=false" >> $GITHUB_OUTPUT
+          else
+            # Determine release type
+            TYPE=$(grep -oP "Analysis of .* commits complete: \K(major|minor|patch)" output.txt || echo "patch")
+            
+            echo "Next version: $VERSION (type: $TYPE)"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "type=$TYPE" >> $GITHUB_OUTPUT
+            echo "release_needed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release (only for major)
+        if: steps.semrel.outputs.release_needed == 'true' && steps.semrel.outputs.type == 'major'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          VERSION: ${{ steps.semrel.outputs.version }}
+        run: |
+          gh release create "v${VERSION}" --title "v${VERSION}" --notes "## Major Release v${VERSION}
+
+This major release includes significant changes. Please check the commit history for details."
+          echo "Created GitHub Release for major version v${VERSION}"
+
+      - name: Publish to npm
+        if: steps.semrel.outputs.release_needed == 'true'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          bun publish --access public
