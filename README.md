@@ -215,7 +215,11 @@ npm run build
 
 ---
 
-This README has been Vibecoded almost entirely due to the author's null skills at writing readmes 😄. But all the rest of the code has been written from scratch.
+## AI Policy
+
+This README has been Vibecoded almost entirely due to the author's null skills at writing readmes 😄.
+GH actions workflow was made using the help of ai too
+All the rest has been coded from scratch.
 
 ## License
 
