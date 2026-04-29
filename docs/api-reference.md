@@ -25,6 +25,9 @@ The central hub that manages entities, components, and systems.
 // Create a new entity
 const entityId = world.create();
 
+// Loop all existing entities
+world.entities.forEach((entity: Entity) => void)
+
 // Destroy an entity
 world.destroy(entityId);
 

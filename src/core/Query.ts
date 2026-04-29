@@ -25,7 +25,10 @@ export abstract class QueryHashCache {
     return hash;
   }
 }
-
+/**
+ * Query class that manages a list of entities with a \
+ * certain component configuration
+ */
 export class Query extends EventRegistry<QueryEvents> {
   private _config: QueryConfig;
   private _world: World;
@@ -47,7 +50,7 @@ export class Query extends EventRegistry<QueryEvents> {
     });
   }
 
-  hasComponents(entityId: number) {
+  private hasComponents(entityId: number) {
     const componentManager = this._world.componentManager;
     return (
       this._config.include?.every((comp: string) =>
@@ -59,22 +62,40 @@ export class Query extends EventRegistry<QueryEvents> {
     );
   }
 
+  /**
+   * Get the first Entity id
+   * @returns number
+   */
   firstId(): number {
     return this._entityMap.first();
   }
 
+  /**
+   * Get the first Entity as proxy if exist
+   * @returns Entity | undefined
+   */
   firstEntity(): Entity | undefined {
     return this.entities[0];
   }
 
+  /**
+   * Gets the total number of entities in this query
+   * @returns number
+   */
   size(): number {
     return this._entityMap.size();
   }
 
+  /**
+   * List of entities as an iterable of numbers
+   */
   get ids(): SparseSet<number> {
     return this._entityMap;
   }
 
+  /**
+   * List of entities as an iterable of EntityProxy
+   */
   get entities(): Entity[] {
     const values: Entity[] = [];
     this._entityMap.forEach((item) => {
@@ -84,10 +105,20 @@ export class Query extends EventRegistry<QueryEvents> {
     return values;
   }
 
+  /**
+   * Creates an include query with the passed components
+   * @param comps
+   * @returns Query instance
+   */
   include(...comps: string[]): Query {
     return this._world.include(...comps);
   }
 
+  /**
+   * Creates an exclude query with the passed components
+   * @param comps
+   * @returns Query instance
+   */
   exclude(...comps: string[]): Query {
     return this._world.exclude(...comps);
   }

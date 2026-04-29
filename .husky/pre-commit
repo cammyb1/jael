@@ -1,0 +1,8 @@
+#!/bin/bash
+# Pre-commit hook to bump version based on conventional commits
+
+# Ejecutar el script con bun
+bun scripts/bump-version.js
+
+# No fallar el commit si algo sale mal
+exit 0
